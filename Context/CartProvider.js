@@ -1,10 +1,18 @@
 "use client";
 import axios from "axios";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { Context } from "./Context";
 import toast from "react-hot-toast";
 
 export const CartContext = createContext();
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return context;
+};
 
 const CartProvider = ({ children }) => {
   const { user } = useContext(Context);
@@ -12,6 +20,24 @@ const CartProvider = ({ children }) => {
     quantity: 1,
     size: "Medium",
   });
+  const [cartItems, setCartItems] = useState([]);
+
+  // Fetch cart items
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        if (!user?.data?._id) return;
+        const response = await axios.post("/api/cart-item", {
+          userId: user.data._id,
+        });
+        setCartItems(response.data.cartItem || []);
+      } catch (error) {
+        console.error("Failed to fetch cart items:", error);
+      }
+    };
+
+    fetchCartItems();
+  }, [user]);
 
   // add item to cart
   const addItemToCart = async (e) => {
@@ -35,10 +61,20 @@ const CartProvider = ({ children }) => {
         quantity: 1,
         size: "Medium",
       });
+      // Refresh cart items
+      const response = await axios.post("/api/cart-item", {
+        userId: user?.data?._id,
+      });
+      setCartItems(response.data.cartItem || []);
     } catch (error) {
       console.log(error);
       toast.error("An error occurred");
     }
+  };
+
+  // clear cart
+  const clearCart = () => {
+    setCartItems([]);
   };
 
   return (
@@ -47,10 +83,13 @@ const CartProvider = ({ children }) => {
         cartdetails,
         setCartDetails,
         addItemToCart,
+        cartItems,
+        clearCart,
       }}
     >
       {children}
     </CartContext.Provider>
   );
 };
+
 export default CartProvider;

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -75,7 +77,7 @@ const OrderConfirmation = () => {
                   <div className="ml-3 flex-1 md:flex md:justify-between">
                     <p className="text-sm text-gray-700">
                       Your order number is:{" "}
-                      <span className="font-medium">{orderId}</span>
+                      <span className="font-medium text-black">{orderId}</span>
                     </p>
                   </div>
                 </div>

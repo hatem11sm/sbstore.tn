@@ -99,8 +99,14 @@ const Header = () => {
                 {user?.data?.isAdmin && (
                   <li>
                     <Link
-                      className="text-gray-800 transition hover:text-gray-800/75 "
+                      className="text-gray-800 transition hover:text-gray-800/75"
                       href="/dashboard"
+                      onClick={(e) => {
+                        if (!user?.data?.isAdmin) {
+                          e.preventDefault();
+                          return;
+                        }
+                      }}
                     >
                       Admin
                     </Link>

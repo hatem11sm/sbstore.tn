@@ -5,11 +5,11 @@ import { NextResponse } from "next/server";
 export const GET = async (req) => {
   await connectDB();
   try {
-    const user = await User.find({});
+    const users = await User.find({}).select("-password");
     return NextResponse.json({
       status: 200,
       message: "success",
-      data: user,
+      data: users,
     });
   } catch (error) {
     return NextResponse.json({

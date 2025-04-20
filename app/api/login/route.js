@@ -29,16 +29,30 @@ export const POST = async (req) => {
             message: "Invalid password",
           });
         } else {
-          const authToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+          const authToken = jwt.sign({ 
+            id: user._id,
+            isAdmin: user.isAdmin 
+          }, process.env.JWT_SECRET);
+          
           cookies().set("authToken", authToken, {
             httpOnly: true,
             maxAge: 60 * 60 * 24 * 7,
+            path: "/",
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production"
+          });
+
+          return NextResponse.json({
+            status: 201,
+            message: "User login successfully",
+            data: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              isAdmin: user.isAdmin
+            }
           });
         }
-        return NextResponse.json({
-          status: 201,
-          message: "User login successfully",
-        });
       }
     }
   } catch (error) {

@@ -21,6 +21,7 @@ const ContextProvider = ({ children }) => {
     password: "",
   });
   const router = useRouter();
+
   // sign up user
   const handleSignUpSubmit = async (e) => {
     e.preventDefault();
@@ -33,7 +34,6 @@ const ContextProvider = ({ children }) => {
         setLoading(false);
       } else {
         const response = await axios.post("/api/signup", signup);
-
         setLoading(false);
         setError(response.data.status !== 201);
         setMessage(response.data.message);
@@ -62,12 +62,14 @@ const ContextProvider = ({ children }) => {
 
     try {
       const response = await axios.post("/api/login", login);
-
       setLoading(false);
       setError(response.data.status !== 201);
       setMessage(response.data.message);
 
       if (response.data.message === "User login successfully") {
+        // Fetch user data after successful login
+        const userResponse = await axios.get("/api/login-user");
+        setUser(userResponse.data);
         router.push("/");
         toast.success("User login successfully");
         setLogin({
@@ -81,6 +83,7 @@ const ContextProvider = ({ children }) => {
       setError(true);
     }
   };
+
   useEffect(() => {
     if (error) {
       setTimeout(() => {
@@ -111,7 +114,6 @@ const ContextProvider = ({ children }) => {
   }, [login]);
 
   // logout user
-
   const handleLogout = async () => {
     try {
       const response = await axios.get("/api/logout");
@@ -121,11 +123,7 @@ const ContextProvider = ({ children }) => {
       console.log(error);
     }
   };
-  useEffect(() => {
-    if (!user?.isAdmin) {
-      router.push("/");
-    }
-  }, [user?.isAdmin, router]);
+
   return (
     <Context.Provider
       value={{

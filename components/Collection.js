@@ -22,7 +22,7 @@ const Collection = () => {
               <Image
                 height={300}
                 width={300}
-                src="https://images.unsplash.com/photo-1624378442362-d3247e8126ec?q=80&w=1976&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="/images/models/man-fashion.jpg"
                 alt=""
                 className="aspect-square w-full object-cover transition duration-500 group-hover:opacity-90"
               />
@@ -66,7 +66,7 @@ const Collection = () => {
               <Image
                 height={300}
                 width={500}
-                src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=2010&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="/images/models/woman-fashion.jpg"
                 alt=""
                 className="aspect-square w-full object-cover transition duration-500 group-hover:opacity-90"
               />
