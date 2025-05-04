@@ -2,7 +2,8 @@
 
 import { ProductContext } from "@/Context/CreateProduct";
 import Image from "next/image";
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 const Form = () => {
   const {
@@ -15,10 +16,27 @@ const Form = () => {
     setDescription,
     category,
     setCategory,
+    subcategory,
+    setSubcategory,
     setFile,
     media,
     uploading,
   } = useContext(ProductContext);
+
+  const [availableSubcategories, setAvailableSubcategories] = useState([]);
+
+  const subcategoryMap = {
+    Men: ["T-Shirts", "Shirts", "Pants", "Jackets", "Shoes"],
+    Women: ["Dresses", "Tops", "Skirts", "Jeans", "Heels"],
+    Kids: ["Boys", "Girls", "Infants"]
+  };
+
+  useEffect(() => {
+    if (category) {
+      setAvailableSubcategories(subcategoryMap[category] || []);
+      setSubcategory(""); // Reset subcategory when category changes
+    }
+  }, [category, setSubcategory]);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -42,12 +60,34 @@ const Form = () => {
       case "category":
         setCategory(e.target.value);
         break;
+      case "subcategory":
+        setSubcategory(e.target.value);
+        break;
       default:
         break;
     }
   };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate all required fields
+    if (!name || !price || !description || !category || !subcategory || !media) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate subcategory
+    if (!subcategory) {
+      toast.error("Please select a subcategory");
+      return;
+    }
+
+    // Validate that the selected subcategory is valid for the chosen category
+    if (!subcategoryMap[category]?.includes(subcategory)) {
+      toast.error("Please select a valid subcategory for the chosen category");
+      return;
+    }
 
     fetchProduct(e);
   };
@@ -61,12 +101,12 @@ const Form = () => {
       </h1>
       <form
         onSubmit={handleSubmit}
-        className="w-full lg:w-11/12 mx-auto md:grid grid-cols-2 grid-rows-1 gap-3 mt-5  p-4"
+        className="w-full lg:w-11/12 mx-auto md:grid grid-cols-2 grid-rows-1 gap-3 mt-5 p-4"
       >
         <div className="flex flex-col items-center justify-center mt-3">
           <label
             htmlFor="name"
-            className=" w-full flex items-start justify-start  text-gray-700 text-sm md:text-base font-medium"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
           >
             Product Name:
           </label>
@@ -74,17 +114,17 @@ const Form = () => {
             type="text"
             id="name"
             name="name"
-            className="w-full  border border-gray-300 p-2 rounded-md mt-2"
+            className="w-full border border-gray-300 p-2 rounded-md mt-2"
             required
             placeholder="Enter product name"
             value={name}
             onChange={handleChange}
           />
         </div>
-        <div className="flex flex-col items-center justify-center  mt-3">
+        <div className="flex flex-col items-center justify-center mt-3">
           <label
             htmlFor="price"
-            className=" w-full flex items-start justify-start  text-gray-700 text-sm md:text-base font-medium"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
           >
             Price:
           </label>
@@ -92,17 +132,17 @@ const Form = () => {
             type="number"
             id="price"
             name="price"
-            className="w-full border  border-gray-300 p-2 rounded-md mt-2"
+            className="w-full border border-gray-300 p-2 rounded-md mt-2"
             required
             placeholder="Enter product price in Dt"
             value={price}
             onChange={handleChange}
           />
         </div>
-        <div className="flex flex-col items-center justify-center  mt-3">
+        <div className="flex flex-col items-center justify-center mt-3">
           <label
             htmlFor="description"
-            className=" w-full flex items-start justify-start  text-gray-700 text-sm md:text-base font-medium"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
           >
             Description:
           </label>
@@ -120,10 +160,10 @@ const Form = () => {
             style={{ resize: "none" }}
           ></textarea>
         </div>
-        <div className="flex flex-col items-center justify-center  mt-3">
+        <div className="flex flex-col items-center justify-center mt-3">
           <label
-            htmlFor="description"
-            className=" w-full flex items-start justify-start  text-gray-700 text-sm md:text-base font-medium"
+            htmlFor="category"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
           >
             Category:
           </label>
@@ -144,10 +184,37 @@ const Form = () => {
             <option value="Kids">Kids</option>
           </select>
         </div>
-        <div className="flex flex-col items-center justify-center  mt-3">
+        <div className="flex flex-col items-center justify-center mt-3">
           <label
-            htmlFor="description"
-            className=" w-full flex items-start justify-start  text-gray-700 text-sm md:text-base font-medium"
+            htmlFor="subcategory"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
+          >
+            Subcategory:
+          </label>
+          <select
+            name="subcategory"
+            id="subcategory"
+            className="w-full border border-gray-300 p-2 rounded-md mt-2"
+            placeholder="Select subcategory"
+            required
+            value={subcategory}
+            onChange={handleChange}
+            disabled={!category}
+          >
+            <option value="" disabled>
+              Select subcategory
+            </option>
+            {availableSubcategories.map((sub) => (
+              <option key={sub} value={sub}>
+                {sub}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col items-center justify-center mt-3">
+          <label
+            htmlFor="image"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
           >
             Image:
           </label>
@@ -203,28 +270,29 @@ const Form = () => {
           )}
         </div>
 
-        <div className=" flex flex-col items-center justify-center  mt-3">
+        <div className="flex flex-col items-center justify-center mt-3">
           {uploading ||
           !name ||
           !category ||
+          !subcategory ||
           !media ||
           !description ||
           !price ? (
             <button
               type="submit"
               disabled
-              className="opacity-50 relative inline-flex items-center justify-center px-10 py-4 overflow-hidden  font-medium tracking-tighter text-white bg-gray-800 rounded-lg group"
+              className="opacity-50 relative inline-flex items-center justify-center px-10 py-4 overflow-hidden font-medium tracking-tighter text-white bg-gray-800 rounded-lg group"
             >
-              <span className="relative ">Create Product</span>
+              <span className="relative">Create Product</span>
             </button>
           ) : (
             <button
               type="submit"
-              className="relative inline-flex items-center justify-center px-10 py-4 overflow-hidden  font-medium tracking-tighter text-white bg-gray-800 rounded-lg group"
+              className="relative inline-flex items-center justify-center px-10 py-4 overflow-hidden font-medium tracking-tighter text-white bg-gray-800 rounded-lg group"
             >
               <span className="absolute w-0 h-0 transition-all duration-500 ease-out bg-green-500 rounded-full group-hover:w-56 group-hover:h-56"></span>
               <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-gray-700"></span>
-              <span className="relative ">Create Product</span>
+              <span className="relative">Create Product</span>
             </button>
           )}
         </div>

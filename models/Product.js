@@ -1,5 +1,18 @@
 import mongoose from "mongoose";
 
+// Define valid categories
+const VALID_CATEGORIES = ["Men", "Women", "Kids"];
+
+// Define valid subcategories
+const VALID_SUBCATEGORIES = [
+  // Men's subcategories
+  "T-Shirts", "Shirts", "Pants", "Jackets", "Shoes",
+  // Women's subcategories
+  "Dresses", "Tops", "Skirts", "Jeans", "Heels",
+  // Kids' subcategories
+  "Boys", "Girls", "Infants"
+];
+
 const clothingProduct = new mongoose.Schema({
   name: {
     type: String,
@@ -18,7 +31,13 @@ const clothingProduct = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ["Men", "Women", "Kids"],
+    trim: true,
+    enum: VALID_CATEGORIES
+  },
+  subcategory: {
+    type: String,
+    required: true,
+    enum: VALID_SUBCATEGORIES
   },
   size: {
     type: [String],
@@ -29,6 +48,12 @@ const clothingProduct = new mongoose.Schema({
     type: String,
     required: true,
   },
+});
+
+// Add pre-save middleware to log the document before saving
+clothingProduct.pre('save', function(next) {
+  console.log("Pre-save document:", this.toObject());
+  next();
 });
 
 const ClothingProduct =

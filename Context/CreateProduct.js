@@ -11,6 +11,7 @@ export const ProductContextProvider = ({ children }) => {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [file, setFile] = useState(null);
   const [media, setMedia] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -68,11 +69,22 @@ export const ProductContextProvider = ({ children }) => {
         return;
       }
 
+      // Log the values being sent
+      console.log("Sending values to API:", {
+        name,
+        price,
+        description,
+        category,
+        subcategory,
+        mainImage: media
+      });
+
       const res = await axios.post("/api/product", {
         name: name,
         price: price,
         description: description,
         category: category,
+        subcategory: subcategory,
         mainImage: media,
       });
 
@@ -81,12 +93,13 @@ export const ProductContextProvider = ({ children }) => {
       setPrice("");
       setDescription("");
       setCategory("");
+      setSubcategory("");
       setFile(null);
       setMedia("");
       toast.success("Product created successfully");
     } catch (error) {
-      toast.error(error.message || "Failed to create product");
-      console.log(error);
+      console.error("Error creating product:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to create product");
     }
   };
 
@@ -116,6 +129,8 @@ export const ProductContextProvider = ({ children }) => {
         setDescription,
         category,
         setCategory,
+        subcategory,
+        setSubcategory,
         file,
         setFile,
         media,
