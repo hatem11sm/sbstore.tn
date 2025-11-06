@@ -2,32 +2,31 @@
 import { ProductContext } from "@/Context/CreateProduct";
 import axios from "axios";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import SInglePRoductSkeleton from "../../SInglePRoductSkeleton";
 
 const Product = () => {
   const router = useRouter();
-  const { id } = router.query;
+  const params = useParams();
+  const id = params?.id;
+  const { categories } = useContext(ProductContext);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [availableSubcategories, setAvailableSubcategories] = useState([]);
 
-  const subcategoryMap = {
-    Men: ["T-Shirts", "Shirts", "Pants", "Jackets", "Shoes"],
-    Women: ["Dresses", "Tops", "Skirts", "Jeans", "Heels"],
-    Kids: ["Boys", "Girls", "Infants"],
-    Accessories: ["Sunglasses", "Watches", "Wallets", "Belts", "Bags"]
-  };
-
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(`/api/product/${id}`);
-        setProduct(res.data.data);
-        setSelectedSubcategory(res.data.data.subcategory);
+        const productData = res.data.data;
+        setProduct({
+          ...productData,
+          categorySlug: productData.categorySlug,
+        });
+        setSelectedSubcategory(productData.subcategory || "");
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch product:", error);
@@ -42,22 +41,36 @@ const Product = () => {
   }, [id]);
 
   useEffect(() => {
-    if (product?.category) {
-      setAvailableSubcategories(subcategoryMap[product.category] || []);
+    if (!product?.categorySlug) {
+      setAvailableSubcategories([]);
+      return;
     }
-  }, [product?.category]);
+    const matchedCategory = categories.find(
+      (item) => item.slug === product.categorySlug
+    );
+    const subs = matchedCategory?.subcategories || [];
+    setAvailableSubcategories(subs);
+    if (selectedSubcategory && !subs.includes(selectedSubcategory)) {
+      setSelectedSubcategory("");
+    }
+  }, [product?.categorySlug, categories, selectedSubcategory]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === "categorySlug") {
+      const matchedCategory = categories.find((item) => item.slug === value);
+      setProduct((prev) => ({
+        ...prev,
+        categorySlug: value,
+        category: matchedCategory?.name || prev?.category || "",
+      }));
+      setSelectedSubcategory("");
+      return;
+    }
     setProduct((prev) => ({
       ...prev,
       [name]: value,
     }));
-
-    if (name === "category") {
-      setAvailableSubcategories(subcategoryMap[value] || []);
-      setSelectedSubcategory("");
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -67,7 +80,7 @@ const Product = () => {
         name: product.name,
         price: product.price,
         description: product.description,
-        category: product.category,
+        categorySlug: product.categorySlug,
         subcategory: selectedSubcategory,
         mainImage: product.mainImage,
       });
@@ -186,21 +199,22 @@ const Product = () => {
             Category:
           </label>
           <select
-            name="category"
-            id="category"
+            name="categorySlug"
+            id="categorySlug"
             className="w-full border border-gray-300 p-2 rounded-md mt-2"
             placeholder="Select category"
             required
-            value={product?.category}
+            value={product?.categorySlug || ""}
             onChange={handleInputChange}
           >
             <option value="" disabled>
               Select category
             </option>
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Kids">Kids</option>
-            <option value="Accessories">Accessories</option>
+            {categories.map((item) => (
+              <option key={item._id} value={item.slug}>
+                {item.name}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex flex-col items-center justify-center  mt-3">
@@ -215,10 +229,10 @@ const Product = () => {
             id="subcategory"
             className="w-full border border-gray-300 p-2 rounded-md mt-2"
             placeholder="Select subcategory"
-            required
+            required={availableSubcategories.length > 0}
             value={selectedSubcategory}
             onChange={(e) => setSelectedSubcategory(e.target.value)}
-            disabled={!product?.category}
+            disabled={!availableSubcategories.length}
           >
             <option value="" disabled>
               Select subcategory

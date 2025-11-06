@@ -7,6 +7,8 @@ const nextConfig = {
       "i.ibb.co",
       "i.postimg.cc",
       "firebasestorage.googleapis.com",
+      "illustrations.popsy.co",
+      "res.cloudinary.com",
     ],
   },
 };

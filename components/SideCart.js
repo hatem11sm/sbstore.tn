@@ -6,6 +6,7 @@ import { Context } from "@/Context/Context";
 import Image from "next/image";
 import axios from "axios";
 import Button from "@/utils/Button";
+import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 
 const SideCart = ({ setIsCartOpen, isCartOpen }) => {
   const { user } = useContext(Context);
@@ -129,7 +130,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                                               <Image
                                                 height={200}
                                                 width={200}
-                                                src={item?.image}
+                                                src={withCloudinaryProxy(item?.image)}
                                                 alt={item?.name}
                                                 className="h-full w-full object-contain object-center"
                                               />

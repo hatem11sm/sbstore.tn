@@ -13,7 +13,7 @@ export const middleware = async (request) => {
     /^\/api\/product\/\w+$/.test(path) ||
     path === "/api/cart" ||
     path === "/api/category" ||
-    /^\/api\/category\/\w+$/.test(path) ||
+    /^\/api\/category\/[\w-]+$/.test(path) ||
     path === "/api/relatedProducts" ||
     /^\/api\/relatedProducts\/\w+$/.test(path)
   ) {

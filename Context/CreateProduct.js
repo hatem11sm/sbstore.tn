@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -15,6 +15,7 @@ export const ProductContextProvider = ({ children }) => {
   const [file, setFile] = useState(null);
   const [media, setMedia] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [categories, setCategories] = useState([]);
   const router = useRouter();
 
   const [products, setProducts] = useState([]);
@@ -83,8 +84,8 @@ export const ProductContextProvider = ({ children }) => {
         name: name,
         price: price,
         description: description,
-        category: category,
-        subcategory: subcategory,
+        categorySlug: category,
+        subcategory: subcategory?.trim() || "",
         mainImage: media,
       });
 
@@ -115,6 +116,22 @@ export const ProductContextProvider = ({ children }) => {
       });
   }, []);
 
+  // Get categories for product creation and navigation
+  const refreshCategories = useCallback(() => {
+    axios
+      .get("/api/category")
+      .then((res) => {
+        setCategories(res.data?.data || []);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch categories:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    refreshCategories();
+  }, [refreshCategories]);
+
   return (
     <ProductContext.Provider
       value={{
@@ -135,6 +152,8 @@ export const ProductContextProvider = ({ children }) => {
         setFile,
         media,
         products,
+        categories,
+        refreshCategories,
       }}
     >
       {children}

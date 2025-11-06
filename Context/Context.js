@@ -2,7 +2,6 @@
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { createContext, useEffect, useState } from "react";
-import { debounce } from "lodash";
 import toast from "react-hot-toast";
 
 export const Context = createContext();
@@ -10,7 +9,7 @@ const ContextProvider = ({ children }) => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(undefined);
   const [signup, setSignUp] = useState({
     name: "",
     email: "",
@@ -95,23 +94,28 @@ const ContextProvider = ({ children }) => {
 
   // get user info
   useEffect(() => {
-    let debouncedCurrentUser;
+    let active = true;
+
     const fetchUser = async () => {
       try {
         const response = await axios.get("/api/login-user");
-        setUser(response.data);
+        if (active) {
+          setUser(response.data);
+        }
       } catch (error) {
-        setUser(null);
+        if (active) {
+          setUser(null);
+        }
         console.log(error);
       }
     };
-    debouncedCurrentUser = debounce(fetchUser, 1500);
-    debouncedCurrentUser();
+
+    fetchUser();
 
     return () => {
-      debouncedCurrentUser.cancel();
+      active = false;
     };
-  }, [login]);
+  }, []);
 
   // logout user
   const handleLogout = async () => {

@@ -1,13 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
-import { format } from "date-fns";
+import Link from "next/link";
+import { format, formatDistanceToNow } from "date-fns";
+import toast from "react-hot-toast";
+import { AdminContext } from "@/Context/AdminProvider";
+
+const statusSteps = [
+  { key: "pending", label: "Pending" },
+  { key: "processing", label: "Processing" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" },
+];
+
+const statusStyles = {
+  pending: "bg-amber-500/10 text-amber-600 ring-1 ring-inset ring-amber-500/30",
+  processing:
+    "bg-blue-500/10 text-blue-600 ring-1 ring-inset ring-blue-500/30",
+  shipped:
+    "bg-violet-500/10 text-violet-600 ring-1 ring-inset ring-violet-500/30",
+  delivered:
+    "bg-emerald-500/10 text-emerald-600 ring-1 ring-inset ring-emerald-500/30",
+  cancelled:
+    "bg-rose-500/10 text-rose-600 ring-1 ring-inset ring-rose-500/30",
+  default: "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200",
+};
 
 const OrderDetails = ({ params }) => {
+  const { totalOrders, setTotalOrders } = useContext(AdminContext);
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const orderTotalValue = useMemo(() => {
+    if (!order) return 0;
+    return typeof order.total === "number"
+      ? order.total
+      : Number.parseFloat(order.total) || 0;
+  }, [order]);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -24,86 +56,313 @@ const OrderDetails = ({ params }) => {
     fetchOrder();
   }, [params.id]);
 
+  const handleStatusChange = async (status) => {
+    if (!order || isUpdating) return;
+    try {
+      setIsUpdating(true);
+      const response = await axios.put(`/api/order/${order._id}`, { status });
+      if (response.data.status === 200) {
+        const updatedOrder = { ...order, status };
+        setOrder(updatedOrder);
+        if (Array.isArray(totalOrders)) {
+          setTotalOrders(
+            totalOrders.map((item) =>
+              item._id === updatedOrder._id ? updatedOrder : item
+            )
+          );
+        }
+        toast.success("Order status updated");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order status");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const currentStepIndex = useMemo(() => {
+    if (!order) return -1;
+    const index = statusSteps.findIndex((step) => step.key === order.status);
+    return index === -1 ? 0 : index;
+  }, [order]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2f4550]"></div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-red-500">Order not found</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm text-rose-600">
+          We couldn&apos;t find that order. It may have been removed.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6">Order Details</h1>
-        
-        {/* Order Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Order Information</h2>
-            <p><span className="font-medium">Order ID:</span> {order._id}</p>
-            <p><span className="font-medium">Date:</span> {format(new Date(order.createdAt), "MMM d, yyyy HH:mm")}</p>
-            <p><span className="font-medium">Status:</span> <span className="capitalize">{order.status}</span></p>
-            <p><span className="font-medium">Total:</span> {order.total} Dt</p>
-          </div>
-          
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Customer Information</h2>
-            <p><span className="font-medium">Name:</span> {order.customer.fullName}</p>
-            <p><span className="font-medium">Phone:</span> {order.customer.phoneNumber}</p>
-            <p><span className="font-medium">Address:</span> {order.shippingAddress}</p>
-            {order.customer.description && (
-              <p><span className="font-medium">Notes:</span> {order.customer.description}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Order Items */}
+    <section className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold mb-4">Order Items</h2>
-          <div className="space-y-4">
-            {order.items.map((item) => (
-              <div key={item._id} className="flex items-center border-b pb-4">
-                <div className="w-24 h-24 relative mr-4">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">{item.name}</h3>
-                  <p className="text-gray-600">Size: {item.size}</p>
-                  <p className="text-gray-600">Quantity: {item.quantity}</p>
-                  <p className="text-gray-600">Price: {item.price} Dt</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">Total: {item.price * item.quantity} Dt</p>
-                </div>
-              </div>
+          <Link
+            href="/dashboard/orders"
+            className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 transition hover:text-slate-600"
+          >
+            Orders
+          </Link>
+          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+            Order #{order._id.slice(-6).toUpperCase()}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Placed {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })} ·{" "}
+            {format(new Date(order.createdAt), "EEEE, MMM d · HH:mm")}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold capitalize ${
+              statusStyles[order.status] ?? statusStyles.default
+            }`}
+          >
+            {order.status}
+          </span>
+          <select
+            value={order.status}
+            disabled={isUpdating}
+            onChange={(event) => handleStatusChange(event.target.value)}
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium capitalize text-slate-600 transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+          >
+            {statusSteps.map((step) => (
+              <option key={step.key} value={step.key}>
+                {step.label}
+              </option>
             ))}
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+  <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Overview
+            </h2>
+            <div className="mt-4 grid gap-6 sm:grid-cols-3">
+              <div className="rounded-2xl bg-slate-900/95 p-5 text-white shadow-lg shadow-slate-900/40">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                  Total
+                </p>
+                <p className="mt-2 text-2xl font-semibold">
+                  {orderTotalValue.toFixed(2)} Dt
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-100 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Items
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900">
+                  {order.items?.length ?? 0}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {order.items
+                    ?.map((item) => item.name)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .join(", ") || "No products"}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-100 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Payment
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900 capitalize">
+                  {order.paymentStatus ?? "Unspecified"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  Status auto-updates with fulfillment changes
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+                Fulfilment progress
+              </h3>
+              {order.status === "cancelled" ? (
+                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                  This order has been cancelled. No further fulfilment actions
+                  are required.
+                </div>
+              ) : (
+                <ol className="mt-4 flex w-full items-start justify-between">
+                  {statusSteps.map((step, index) => {
+                    const isCompleted = index <= currentStepIndex;
+                    return (
+                      <li
+                        key={step.key}
+                        className="flex flex-1 flex-col items-center text-center"
+                      >
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${
+                            isCompleted
+                              ? "border-emerald-500 bg-emerald-500 text-white"
+                              : "border-slate-200 bg-white text-slate-400"
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                          {step.label}
+                        </p>
+                        {index < statusSteps.length - 1 && (
+                          <span
+                            className={`mt-3 h-[2px] w-full max-w-[120px] ${
+                              index < currentStepIndex
+                                ? "bg-emerald-500"
+                                : "bg-slate-200"
+                            }`}
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Items
+            </h2>
+            <div className="mt-4 space-y-4">
+              {order.items?.map((item) => {
+                const quantity = Number(item.quantity ?? 0);
+                const unitPrice =
+                  typeof item.price === "number"
+                    ? item.price
+                    : Number.parseFloat(item.price) || 0;
+                const itemTotal = quantity * unitPrice;
+
+                return (
+                  <div
+                    key={`${item._id}-${item.size}`}
+                    className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition hover:border-slate-200 sm:flex-row sm:items-center"
+                  >
+                    <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-white shadow-inner">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-contain p-2"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Size {item.size ?? "N/A"} · {quantity} pcs
+                      </p>
+                    </div>
+                    <div className="text-right text-sm font-semibold text-slate-900">
+                      {itemTotal.toFixed(2)} Dt
+                      <p className="text-xs font-medium text-slate-500">
+                        {unitPrice.toFixed(2)} Dt / unit
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+              <span className="text-sm text-slate-500">Order total</span>
+              <span className="text-2xl font-semibold text-slate-900">
+                {orderTotalValue.toFixed(2)} Dt
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Order Total */}
-        <div className="mt-6 pt-4 border-t">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold">Order Total</span>
-            <span className="text-xl font-bold">{order.total} Dt</span>
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Customer
+            </h2>
+            <div className="mt-4 space-y-4 text-sm text-slate-700">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Full name
+                </p>
+                <p className="mt-1 text-base font-semibold text-slate-900">
+                  {order.customer?.fullName ?? "Unknown"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Phone
+                </p>
+                <p className="mt-1 font-medium text-slate-900">
+                  {order.customer?.phoneNumber ?? "Not provided"}
+                </p>
+              </div>
+              {order.customer?.email && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                    Email
+                  </p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {order.customer.email}
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Shipping address
+                </p>
+                <p className="mt-1 leading-relaxed text-slate-900">
+                  {order.shippingAddress ?? "No address provided"}
+                </p>
+              </div>
+              {order.customer?.description && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                    Notes
+                  </p>
+                  <p className="mt-1 leading-relaxed text-slate-900">
+                    {order.customer.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-indigo-200 bg-indigo-50/70 p-6 shadow-lg shadow-indigo-200/40">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-600">
+              Quick actions
+            </h2>
+            <ul className="mt-4 space-y-3 text-sm text-indigo-900">
+              <li className="rounded-2xl bg-white/60 px-4 py-3">
+                Send a confirmation message once the status changes.
+              </li>
+              <li className="rounded-2xl bg-white/60 px-4 py-3">
+                Double-check the address before dispatching shipments.
+              </li>
+              <li className="rounded-2xl bg-white/60 px-4 py-3">
+                Update payment status when funds are confirmed.
+              </li>
+            </ul>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
-export default OrderDetails; 
+export default OrderDetails;

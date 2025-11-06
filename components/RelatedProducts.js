@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import CardSkeleton from "./CardSkeleton";
+import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 
 const RelatedProducts = ({ id }) => {
   const [product, setProduct] = useState([]);
@@ -49,7 +50,7 @@ const RelatedProducts = ({ id }) => {
               <Image
                 width={500}
                 height={400}
-                src={product?.mainImage}
+                src={withCloudinaryProxy(product?.mainImage)}
                 alt={product?.name}
                 className="h-full w-full object-contain object-center group-hover:opacity-75"
               />

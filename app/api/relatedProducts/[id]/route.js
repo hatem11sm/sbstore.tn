@@ -21,7 +21,7 @@ export const GET = async (req, { params }) => {
     });
   } else {
     const relatedProducts = await ClothingProduct.find({
-      category: product.category,
+      categorySlug: product.categorySlug,
     });
     const shuffledProducts = shuffleArray(relatedProducts);
     const randomRelatedProducts = shuffledProducts.slice(0, 4);

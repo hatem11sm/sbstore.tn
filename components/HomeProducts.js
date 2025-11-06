@@ -1,5 +1,6 @@
 "use client";
 import { ProductContext } from "@/Context/CreateProduct";
+import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 import Image from "next/image";
 import Link from "next/link";
 import { useContext } from "react";
@@ -37,7 +38,7 @@ const HomeProducts = ({ show }) => {
                         <Image
                           width={500}
                           height={400}
-                          src={product?.mainImage}
+                          src={withCloudinaryProxy(product?.mainImage)}
                           alt={product?.name}
                           className="h-full w-full object-cover object-center group-hover:opacity-75"
                         />
@@ -61,7 +62,7 @@ const HomeProducts = ({ show }) => {
                       <Image
                         width={300}
                         height={300}
-                        src={product?.mainImage}
+                        src={withCloudinaryProxy(product?.mainImage)}
                         alt={product?.name}
                         className="h-full w-full object-cover object-center group-hover:opacity-75"
                       />

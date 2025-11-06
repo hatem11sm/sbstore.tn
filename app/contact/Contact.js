@@ -70,7 +70,7 @@ const Contact = () => {
                 <p className="mt-2 text-sm text-gray-500">
                   Our friendly team is here to help.
                 </p>
-                <p className="mt-2 text-sm text-gray-500">test@gmail.com</p>
+                <p className="mt-2 text-sm text-gray-500">contact@sbstore.tn</p>
               </div>
 
               <div>
@@ -134,7 +134,7 @@ const Contact = () => {
                 <p className="mt-2 text-sm text-gray-500">
                   Come say hello at our office HQ.
                 </p>
-                <p className="mt-2 text-sm text-gray-500">New Delhi, India</p>
+                <p className="mt-2 text-sm text-gray-500">Carthage Salambo, Tunis</p>
               </div>
 
               <div>
@@ -159,7 +159,7 @@ const Contact = () => {
                   Phone
                 </h2>
 
-                <p className="mt-2 text-sm text-gray-500">+91 9876543210</p>
+                <p className="mt-2 text-sm text-gray-500">25 413 401</p>
               </div>
             </div>
 
@@ -207,7 +207,7 @@ const Contact = () => {
                   </label>
                   <input
                     type="email"
-                    placeholder="test@gmail.com"
+                    placeholder="contact@sbstore.tn"
                     name="email"
                     className="block w-full px-5 py-2.5 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg  focus:border-gray-400 der-gray-400 focus:ring-gray-400 focus:outline-none focus:ring focus:ring-opacity-40"
                   />

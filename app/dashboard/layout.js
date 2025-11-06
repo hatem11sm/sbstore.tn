@@ -3,6 +3,8 @@ import Header from "./Header";
 import { useContext, useState, useEffect } from "react";
 import { Context } from "@/Context/Context";
 import { useRouter } from "next/navigation";
+import AdminProvider from "@/Context/AdminProvider";
+import Sidebar from "./Sidebar";
 
 const Layout = ({ children }) => {
   const { user } = useContext(Context);
@@ -10,12 +12,14 @@ const Layout = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user !== undefined) {
-      setIsLoading(false);
-      if (!user?.data?.isAdmin) {
-        router.push("/");
-        return;
-      }
+    if (user === undefined) {
+      return;
+    }
+
+    setIsLoading(false);
+
+    if (!user?.data?.isAdmin) {
+      router.replace("/");
     }
   }, [user, router]);
 
@@ -32,12 +36,19 @@ const Layout = ({ children }) => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-100">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
-    </div>
+    <AdminProvider>
+      <div className="min-h-screen w-full bg-slate-100">
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex flex-1 flex-col">
+            <Header />
+            <main className="flex-1 bg-slate-50 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+              <div className="mx-auto w-full max-w-6xl">{children}</div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </AdminProvider>
   );
 };
 

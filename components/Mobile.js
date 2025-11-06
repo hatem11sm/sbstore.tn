@@ -75,18 +75,17 @@ const Mobile = ({ setIsOpen, categories }) => {
                 </summary>
 
                 <ul className="mt-2 space-y-1 px-4">
-                  {categories?.map((category) => {
-                    return (
-                      <li key={category}>
-                        <Link
-                          href={`/category/${category}`}
-                          className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                        >
-                          {category}
-                        </Link>
-                      </li>
-                    );
-                  })}
+                  {categories?.map((category) => (
+                    <li key={category._id}>
+                      <Link
+                        href={`/category/${category.slug}`}
+                        className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {category.name}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </details>
             </li>

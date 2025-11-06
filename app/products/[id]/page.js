@@ -11,18 +11,17 @@ import { useContext, useEffect, useState } from "react";
 
 const Product = () => {
   const [product, setProduct] = useState({});
-
-  const { _id } = useParams();
+  const { id } = useParams();
   const { cartdetails, setCartDetails, addItemToCart } =
     useContext(CartContext);
   const { user } = useContext(Context);
   useEffect(() => {
     const fetchProduct = async () => {
-      const res = await axios.get(`/api/product/${_id}`);
+      const res = await axios.get(`/api/product/${id}`);
       setProduct(res.data.data);
     };
     fetchProduct();
-  }, [_id]);
+  }, [id]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -243,7 +242,7 @@ const Product = () => {
           </div>
         </div>
       </section>
-      <RelatedProducts id={_id} />
+      <RelatedProducts id={id} />
     </div>
   );
 };

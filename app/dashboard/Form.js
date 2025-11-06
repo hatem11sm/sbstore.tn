@@ -21,22 +21,19 @@ const Form = () => {
     setFile,
     media,
     uploading,
+    categories,
   } = useContext(ProductContext);
 
   const [availableSubcategories, setAvailableSubcategories] = useState([]);
 
-  const subcategoryMap = {
-    Men: ["T-Shirts", "Shirts", "Pants", "Jackets", "Shoes"],
-    Women: ["Dresses", "Tops", "Skirts", "Jeans", "Heels"],
-    Kids: ["Boys", "Girls", "Infants"]
-  };
-
   useEffect(() => {
-    if (category) {
-      setAvailableSubcategories(subcategoryMap[category] || []);
-      setSubcategory(""); // Reset subcategory when category changes
+    const selectedCategory = categories.find((item) => item.slug === category);
+    const subcategories = selectedCategory?.subcategories || [];
+    setAvailableSubcategories(subcategories);
+    if (subcategory && !subcategories.includes(subcategory)) {
+      setSubcategory("");
     }
-  }, [category, setSubcategory]);
+  }, [category, categories, setSubcategory, subcategory]);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -72,19 +69,12 @@ const Form = () => {
     e.preventDefault();
     
     // Validate all required fields
-    if (!name || !price || !description || !category || !subcategory || !media) {
+    if (!name || !price || !description || !category || !media) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Validate subcategory
-    if (!subcategory) {
-      toast.error("Please select a subcategory");
-      return;
-    }
-
-    // Validate that the selected subcategory is valid for the chosen category
-    if (!subcategoryMap[category]?.includes(subcategory)) {
+    if (availableSubcategories.length > 0 && !subcategory) {
       toast.error("Please select a valid subcategory for the chosen category");
       return;
     }
@@ -179,9 +169,11 @@ const Form = () => {
             <option value="" disabled>
               Select category
             </option>
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Kids">Kids</option>
+            {categories.map((item) => (
+              <option key={item._id} value={item.slug}>
+                {item.name}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex flex-col items-center justify-center mt-3">
@@ -196,10 +188,10 @@ const Form = () => {
             id="subcategory"
             className="w-full border border-gray-300 p-2 rounded-md mt-2"
             placeholder="Select subcategory"
-            required
+            required={availableSubcategories.length > 0}
             value={subcategory}
             onChange={handleChange}
-            disabled={!category}
+            disabled={!availableSubcategories.length}
           >
             <option value="" disabled>
               Select subcategory

@@ -1,12 +1,8 @@
 "use client";
 
-import { AdminContext } from "@/Context/AdminProvider";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import { Chart } from "chart.js";
-import { FaUser } from "react-icons/fa6";
-import { BsFillBoxSeamFill } from "react-icons/bs";
-import { FaShoppingCart } from "react-icons/fa";
 import {
   LinearScale,
   CategoryScale,
@@ -15,96 +11,244 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { FaUser } from "react-icons/fa6";
+import { BsFillBoxSeamFill } from "react-icons/bs";
+import { FaShoppingCart } from "react-icons/fa";
+import { PiCurrencyDollarSimpleThin } from "react-icons/pi";
+import Link from "next/link";
+import { format } from "date-fns";
+import { AdminContext } from "@/Context/AdminProvider";
+import TableSkeleton from "./TableSkeleton";
 
 Chart.register(LinearScale, CategoryScale, BarElement, Title, Tooltip, Legend);
 
+const statCards = [
+  {
+    key: "users",
+    label: "Total users",
+    icon: FaUser,
+    accent: "from-sky-500/10 to-sky-500/20 text-sky-600",
+  },
+  {
+    key: "products",
+    label: "Total products",
+    icon: BsFillBoxSeamFill,
+    accent: "from-emerald-500/10 to-emerald-500/20 text-emerald-600",
+  },
+  {
+    key: "orders",
+    label: "Total orders",
+    icon: FaShoppingCart,
+    accent: "from-violet-500/10 to-violet-500/20 text-violet-600",
+  },
+  {
+    key: "revenue",
+    label: "Revenue to date",
+    icon: PiCurrencyDollarSimpleThin,
+    accent: "from-amber-500/10 to-amber-500/20 text-amber-600",
+  },
+];
+
 const Dashboard = () => {
-  const { totalUser, totalProduct, totalOrders } = useContext(AdminContext);
-  const [isLoading, setIsLoading] = useState(true);
+  const { totalUser, totalProduct, totalOrders, isLoading, error } =
+    useContext(AdminContext);
 
-  useEffect(() => {
-    if (totalUser !== undefined && totalProduct !== undefined && totalOrders !== undefined) {
-      setIsLoading(false);
-    }
-  }, [totalUser, totalProduct, totalOrders]);
+  const totalRevenue = useMemo(() => {
+    if (!Array.isArray(totalOrders)) return 0;
+    return totalOrders.reduce((sum, order) => {
+      const value =
+        typeof order.total === "number"
+          ? order.total
+          : Number.parseFloat(order.total) || 0;
+      return sum + value;
+    }, 0);
+  }, [totalOrders]);
 
-  const data = {
+  const recentOrders = useMemo(() => {
+    if (!Array.isArray(totalOrders)) return [];
+    return [...totalOrders]
+      .sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 5);
+  }, [totalOrders]);
+
+  const chartData = {
     labels: ["Users", "Products", "Orders"],
     datasets: [
       {
-        label: "# of Items",
-        data: [totalUser?.length || 0, totalProduct?.length || 0, totalOrders?.length || 0],
+        label: "Totals",
+        data: [
+          totalUser?.length || 0,
+          totalProduct?.length || 0,
+          totalOrders?.length || 0,
+        ],
         backgroundColor: [
-          "rgba(75, 192, 192, 0.2)",
-          "rgba(255, 99, 132, 0.2)",
-          "rgba(54, 162, 235, 0.2)",
+          "rgba(56, 189, 248, 0.35)",
+          "rgba(34, 197, 94, 0.35)",
+          "rgba(139, 92, 246, 0.35)",
         ],
-        borderColor: [
-          "rgba(75, 192, 192, 1)",
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-        ],
-        borderWidth: 1,
+        borderRadius: 18,
+        borderSkipped: false,
       },
     ],
   };
 
-  const options = {
+  const chartOptions = {
+    responsive: true,
+    plugins: { legend: { display: false } },
     scales: {
-      y: {
-        type: "linear",
-        beginAtZero: true,
-      },
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, ticks: { stepSize: 5 } },
     },
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-64 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    );
+  if (isLoading && !totalOrders?.length) {
+    return <TableSkeleton />;
   }
 
   return (
-    <div className="w-full">
-      <h2 className="text-3xl font-bold mb-8 text-gray-800">Dashboard Overview</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700">Total Users</h3>
-              <p className="text-3xl font-bold text-blue-600">{totalUser?.length || 0}</p>
+    <section className="space-y-8">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          const value =
+            card.key === "users"
+              ? totalUser?.length ?? 0
+              : card.key === "products"
+              ? totalProduct?.length ?? 0
+              : card.key === "orders"
+              ? totalOrders?.length ?? 0
+              : totalRevenue.toFixed(2) + " Dt";
+
+          return (
+            <div
+              key={card.key}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5"
+            >
+              <div
+                className={`inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r ${card.accent} px-4 py-2 text-sm font-semibold`}
+              >
+                <Icon />
+                {card.label}
+              </div>
+              <p className="mt-6 text-3xl font-semibold text-slate-900">
+                {card.key === "revenue" ? value : value.toLocaleString()}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Last update · {new Date().toLocaleTimeString()}
+              </p>
             </div>
-            <FaUser className="text-4xl text-blue-500" />
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+            Store growth
+          </h2>
+          <div className="mt-6 h-72">
+            <Bar data={chartData} options={chartOptions} />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700">Total Products</h3>
-              <p className="text-3xl font-bold text-green-600">{totalProduct?.length || 0}</p>
-            </div>
-            <BsFillBoxSeamFill className="text-4xl text-green-500" />
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700">Total Orders</h3>
-              <p className="text-3xl font-bold text-purple-600">{totalOrders?.length || 0}</p>
-            </div>
-            <FaShoppingCart className="text-4xl text-purple-500" />
-          </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+            Quick insights
+          </h2>
+          <ul className="mt-4 space-y-4 text-sm text-slate-700">
+            <li className="rounded-2xl bg-slate-50 px-4 py-3">
+              {totalOrders?.length ?? 0} orders captured in total.
+            </li>
+            <li className="rounded-2xl bg-slate-50 px-4 py-3">
+              {totalProduct?.length ?? 0} products currently visible to shoppers.
+            </li>
+            <li className="rounded-2xl bg-slate-50 px-4 py-3">
+              {totalUser?.length ?? 0} registered customers to nurture.
+            </li>
+            <li className="rounded-2xl bg-slate-50 px-4 py-3">
+              {totalRevenue.toFixed(2)} Dt in lifetime revenue tracked here.
+            </li>
+          </ul>
         </div>
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold mb-4 text-gray-800">Statistics</h3>
-        <div className="h-64">
-          <Bar data={data} options={options} />
+
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Recent orders
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Peek at the latest activity and jump in when needed.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/orders"
+            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            View all orders
+          </Link>
+        </div>
+        <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
+          <table className="min-w-full divide-y divide-slate-100 text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+              <tr>
+                <th className="px-6 py-3">Order</th>
+                <th className="px-6 py-3">Customer</th>
+                <th className="px-6 py-3">Date</th>
+                <th className="px-6 py-3">Total</th>
+                <th className="px-6 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {recentOrders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-8 text-center text-sm text-slate-400"
+                  >
+                    No orders yet. Your next sale is around the corner 🚀
+                  </td>
+                </tr>
+              ) : (
+                recentOrders.map((order) => (
+                  <tr key={order._id} className="bg-white">
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      #{order._id.slice(-6).toUpperCase()}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {order.customer?.fullName ?? "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">
+                      {format(new Date(order.createdAt), "MMM d, yyyy")}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      {typeof order.total === "number"
+                        ? order.total.toFixed(2)
+                        : Number.parseFloat(order.total || 0).toFixed(2)}{" "}
+                      Dt
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex rounded-full bg-slate-900/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
+
+      {error && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+          {error}
+        </div>
+      )}
+    </section>
   );
 };
 

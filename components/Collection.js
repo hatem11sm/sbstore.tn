@@ -1,10 +1,63 @@
+"use client";
+import { ProductContext } from "@/Context/CreateProduct";
+import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 import Image from "next/image";
 import Link from "next/link";
+import { useContext, useMemo } from "react";
+
+const fallbackCategories = [
+  {
+    name: "Men",
+    slug: "men",
+    image: "/images/models/man-fashion.jpg",
+  },
+  {
+    name: "Kids",
+    slug: "kids",
+    image: "/images/models/kids-fashion.jpg",
+  },
+  {
+    name: "Women",
+    slug: "women",
+    image: "/images/models/woman-fashion.jpg",
+  },
+];
 
 const Collection = () => {
+  const { categories } = useContext(ProductContext);
+
+  const displayCategories = useMemo(() => {
+    if (!categories.length) {
+      return fallbackCategories;
+    }
+
+    const normalized = categories.map((category, index) => ({
+      key: category._id || `${category.slug}-${index}`,
+      name: category.name,
+      slug: category.slug,
+      image: category.image || fallbackCategories[index % fallbackCategories.length].image,
+    }));
+
+    if (normalized.length >= 3) {
+      return normalized.slice(0, 3);
+    }
+
+    const merged = [...normalized];
+    let fallbackIndex = 0;
+    while (merged.length < 3) {
+      const fallback = fallbackCategories[fallbackIndex % fallbackCategories.length];
+      merged.push({
+        key: `${fallback.slug}-${merged.length}`,
+        ...fallback,
+      });
+      fallbackIndex += 1;
+    }
+    return merged;
+  }, [categories]);
+
   return (
     <section>
-      <div className="mx-auto  lg:w-10/12 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto lg:w-10/12 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <header className="text-center">
           <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">
             New Collection
@@ -17,71 +70,48 @@ const Collection = () => {
         </header>
 
         <ul className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <li>
-            <Link href={"/category/Men"} className="group relative block">
-              <Image
-                height={300}
-                width={300}
-                src="/images/models/man-fashion.jpg"
-                alt=""
-                className="aspect-square w-full object-cover transition duration-500 group-hover:opacity-90"
-              />
+          {displayCategories.map((category, index) => {
+            const isFeatured = index === 2;
+            return (
+              <li
+                key={category.key}
+                className={
+                  isFeatured
+                    ? "lg:col-span-2 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                    : undefined
+                }
+              >
+                <Link
+                  href={`/category/${category.slug}`}
+                  className="group relative block"
+                >
+                  <Image
+                    height={isFeatured ? 300 : 300}
+                    width={isFeatured ? 500 : 300}
+                    src={withCloudinaryProxy(category.image)}
+                    alt={`${category.name} collection`}
+                    className={`aspect-square w-full object-cover transition duration-500 group-hover:opacity-90 ${
+                      isFeatured ? "" : ""
+                    }`}
+                  />
 
-              <div className="absolute inset-0 flex flex-col items-start justify-end p-6">
-                <h3 className="text-xl font-medium text-white">
-                  {"Man's Collection"}
-                </h3>
+                  <div className="absolute inset-0 flex flex-col items-start justify-end p-6">
+                    <h3
+                      className={`text-xl font-medium ${
+                        isFeatured ? "text-black" : "text-white"
+                      }`}
+                    >
+                      {`${category.name} Collection`}
+                    </h3>
 
-                <span className="mt-1.5 inline-block bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white rounded">
-                  Shop Now
-                </span>
-              </div>
-            </Link>
-          </li>
-
-          <li>
-            <Link href={"/category/Kids"} className="group relative block">
-              <Image
-                height={300}
-                width={300}
-                src="/images/models/kids-fashion.jpg"
-                alt=""
-                className="aspect-square w-full object-cover transition duration-500 group-hover:opacity-90"
-              />
-
-              <div className="absolute inset-0 flex flex-col items-start justify-end p-6">
-                <h3 className="text-xl font-medium text-white">
-                  {"Kids Collection"}
-                </h3>
-
-                <span className="mt-1.5 inline-block bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white rounded">
-                  Shop Now
-                </span>
-              </div>
-            </Link>
-          </li>
-
-          <li className="lg:col-span-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <Link href={"/category/Women"} className="group relative block">
-              <Image
-                height={300}
-                width={500}
-                src="/images/models/woman-fashion.jpg"
-                alt=""
-                className="aspect-square w-full object-cover transition duration-500 group-hover:opacity-90"
-              />
-
-              <div className="absolute inset-0 flex flex-col items-start justify-end p-6">
-                <h3 className="text-xl font-medium text-black">
-                  {"Women's Collection"}
-                </h3>
-
-                <span className="mt-1.5 inline-block bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white rounded">
-                  Shop Now
-                </span>
-              </div>
-            </Link>
-          </li>
+                    <span className="mt-1.5 inline-block bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white rounded">
+                      Shop Now
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>

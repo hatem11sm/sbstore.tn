@@ -1,17 +1,5 @@
 import mongoose from "mongoose";
-
-// Define valid categories
-const VALID_CATEGORIES = ["Men", "Women", "Kids"];
-
-// Define valid subcategories
-const VALID_SUBCATEGORIES = [
-  // Men's subcategories
-  "T-Shirts", "Shirts", "Pants", "Jackets", "Shoes",
-  // Women's subcategories
-  "Dresses", "Tops", "Skirts", "Jeans", "Heels",
-  // Kids' subcategories
-  "Boys", "Girls", "Infants"
-];
+import slugify from "@/utils/slugify";
 
 const clothingProduct = new mongoose.Schema({
   name: {
@@ -32,12 +20,17 @@ const clothingProduct = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    enum: VALID_CATEGORIES
+  },
+  categorySlug: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
   },
   subcategory: {
     type: String,
-    required: true,
-    enum: VALID_SUBCATEGORIES
+    trim: true,
+    default: "",
   },
   size: {
     type: [String],
@@ -48,6 +41,13 @@ const clothingProduct = new mongoose.Schema({
     type: String,
     required: true,
   },
+});
+
+clothingProduct.pre("validate", function ensureCategorySlug(next) {
+  if (this.category && !this.categorySlug) {
+    this.categorySlug = slugify(this.category);
+  }
+  next();
 });
 
 // Add pre-save middleware to log the document before saving

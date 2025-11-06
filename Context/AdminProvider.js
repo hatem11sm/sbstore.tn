@@ -17,6 +17,10 @@ const AdminProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (user === undefined) {
+        return;
+      }
+
       if (!user?.data?.isAdmin) {
         setIsLoading(false);
         return;

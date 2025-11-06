@@ -2,26 +2,20 @@
 import Link from "next/link";
 import { BsBag } from "react-icons/bs";
 import Mobile from "./Mobile";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import SideCart from "./SideCart";
 import { Context } from "@/Context/Context";
-import axios from "axios";
+import { ProductContext } from "@/Context/CreateProduct";
 import Image from "next/image";
+import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { user, handleLogout } = useContext(Context);
-  const [categories, setCategories] = useState([]);
+  const { categories } = useContext(ProductContext);
   const [isHovered, setIsHovered] = useState(false);
   const name = user?.data?.name.replace(/ .*/, "");
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const res = await axios.get("/api/category");
-      setCategories(res?.data?.data);
-    };
-    fetchCategories();
-  }, []);
   return (
     <div className="w-full relative">
       <header className="bg-white ">
@@ -29,7 +23,7 @@ const Header = () => {
           <Link className="block text-teal-600" href="/">
             <span className="sr-only">Home</span>
             <Image
-              src={"/logo/logo-black.svg"}
+              src={withCloudinaryProxy("/logo/logo-black.svg")}
               alt="Logo"
               width={100}
               height={100}
@@ -66,12 +60,12 @@ const Header = () => {
                       className="absolute top-8 left-0 w-48 bg-white shadow-lg rounded-lg py-3 z-50"
                     >
                       {categories?.map((category) => (
-                        <li key={category}>
+                        <li key={category._id}>
                           <Link
-                            href={`/category/${category}`}
+                            href={`/category/${category.slug}`}
                             className="block px-5 py-2.5 text-sm text-gray-800 transition hover:bg-gray-100"
                           >
-                            {category}
+                            {category.name}
                           </Link>
                         </li>
                       ))}
@@ -177,9 +171,7 @@ const Header = () => {
         </div>
       </header>
       {isOpen && (
-        <div
-          className={`absolute left-0 top-0 w-52 md:hidden bg-white shadow-lg rounded-lg z-50`}
-        >
+        <div className="absolute left-0 top-0 w-52 md:hidden bg-white shadow-lg rounded-lg z-50">
           <Mobile setIsOpen={setIsOpen} categories={categories} />
         </div>
       )}
