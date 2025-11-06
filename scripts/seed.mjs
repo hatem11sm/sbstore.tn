@@ -20,7 +20,7 @@ const CATEGORY_DATA = [
   {
     name: "Men",
     description:
-      "Versatile menswear staples, footwear, and accessories for every day.",
+      "Versatile hello menswear staples, footwear, and accessories for every day.",
     image:
       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80",
     gallery: [
