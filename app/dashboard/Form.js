@@ -4,6 +4,11 @@ import { ProductContext } from "@/Context/CreateProduct";
 import Image from "next/image";
 import { useContext, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import {
+  buildCategoryKey,
+  parseCategoryKey,
+  normalizeCollectionGroup,
+} from "@/utils/categoryPaths";
 
 const Form = () => {
   const {
@@ -27,7 +32,12 @@ const Form = () => {
   const [availableSubcategories, setAvailableSubcategories] = useState([]);
 
   useEffect(() => {
-    const selectedCategory = categories.find((item) => item.slug === category);
+    const { slug: selectedSlug, collectionGroup } = parseCategoryKey(category);
+    const selectedCategory = categories.find(
+      (item) =>
+        item.slug === selectedSlug &&
+        normalizeCollectionGroup(item.collectionGroup) === collectionGroup
+    );
     const subcategories = selectedCategory?.subcategories || [];
     setAvailableSubcategories(subcategories);
     if (subcategory && !subcategories.includes(subcategory)) {
@@ -170,8 +180,8 @@ const Form = () => {
               Select category
             </option>
             {categories.map((item) => (
-              <option key={item._id} value={item.slug}>
-                {item.name}
+              <option key={item._id} value={buildCategoryKey(item)}>
+                {item.name} · {item.collectionGroup?.toUpperCase() || "WOMAN"}
               </option>
             ))}
           </select>

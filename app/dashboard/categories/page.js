@@ -3,12 +3,14 @@ import { ProductContext } from "@/Context/CreateProduct";
 import axios from "axios";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { normalizeCollectionGroup } from "@/utils/categoryPaths";
 
 const initialFormState = {
   name: "",
   description: "",
   image: "",
   subcategories: "",
+  collectionGroup: "woman",
 };
 
 const CategoriesPage = () => {
@@ -16,7 +18,7 @@ const CategoriesPage = () => {
   const [formState, setFormState] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [editingSlug, setEditingSlug] = useState(null);
+  const [editingCategoryRef, setEditingCategoryRef] = useState(null);
   const { refreshCategories } = useContext(ProductContext);
 
   const fetchCategories = async () => {
@@ -67,12 +69,16 @@ const CategoriesPage = () => {
       description: formState.description.trim(),
       image: formState.image.trim(),
       subcategories: normalizedSubcategories,
+      collectionGroup: formState.collectionGroup,
     };
 
     try {
       setIsSubmitting(true);
-      if (editingSlug) {
-        await axios.put(`/api/category/${editingSlug}`, payload);
+      if (editingCategoryRef) {
+        await axios.put(
+          `/api/category/${editingCategoryRef.collectionGroup}/${editingCategoryRef.slug}`,
+          payload
+        );
         toast.success("Category updated");
       } else {
         await axios.post("/api/category", payload);
@@ -81,7 +87,7 @@ const CategoriesPage = () => {
       await fetchCategories();
       refreshCategories();
       setFormState(initialFormState);
-      setEditingSlug(null);
+      setEditingCategoryRef(null);
     } catch (error) {
       console.error("Failed to save category:", error);
       const message =
@@ -98,22 +104,33 @@ const CategoriesPage = () => {
       description: category.description || "",
       image: category.image || "",
       subcategories: (category.subcategories || []).join(", "),
+      collectionGroup: category.collectionGroup || "woman",
     });
-    setEditingSlug(category.slug);
+    setEditingCategoryRef({
+      slug: category.slug,
+      collectionGroup: normalizeCollectionGroup(category.collectionGroup),
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (slug) => {
+  const handleDelete = async (category) => {
     if (!confirm("Are you sure you want to delete this category?")) {
       return;
     }
     try {
-      await axios.delete(`/api/category/${slug}`);
+      await axios.delete(
+        `/api/category/${normalizeCollectionGroup(category.collectionGroup)}/${category.slug}`
+      );
       toast.success("Category deleted");
       await fetchCategories();
       refreshCategories();
-      if (editingSlug === slug) {
-        setEditingSlug(null);
+      if (
+        editingCategoryRef &&
+        editingCategoryRef.slug === category.slug &&
+        editingCategoryRef.collectionGroup ===
+          normalizeCollectionGroup(category.collectionGroup)
+      ) {
+        setEditingCategoryRef(null);
         setFormState(initialFormState);
       }
     } catch (error) {
@@ -126,7 +143,7 @@ const CategoriesPage = () => {
   };
 
   const handleCancelEdit = () => {
-    setEditingSlug(null);
+    setEditingCategoryRef(null);
     setFormState(initialFormState);
   };
 
@@ -136,13 +153,13 @@ const CategoriesPage = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              {editingSlug ? "Edit Category" : "Create Category"}
+              {editingCategoryRef ? "Edit Category" : "Create Category"}
             </h1>
             <p className="text-sm text-gray-500">
               Manage the categories available when creating products.
             </p>
           </div>
-          {editingSlug && (
+          {editingCategoryRef && (
             <button
               type="button"
               onClick={handleCancelEdit}
@@ -169,6 +186,28 @@ const CategoriesPage = () => {
               placeholder="e.g. Men"
               required
             />
+          </div>
+          <div className="flex flex-col">
+            <label
+              htmlFor="collectionGroup"
+              className="text-sm font-medium text-gray-700 mb-1"
+            >
+              Collection Group
+            </label>
+            <select
+              id="collectionGroup"
+              name="collectionGroup"
+              value={formState.collectionGroup}
+              onChange={handleChange}
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-500 uppercase"
+            >
+              <option value="woman">Woman</option>
+              <option value="man">Man</option>
+              <option value="kids">Kids</option>
+            </select>
+            <span className="text-xs text-gray-400 mt-1">
+              Determines which mega-menu bucket this category belongs to.
+            </span>
           </div>
           <div className="flex flex-col">
             <label
@@ -233,10 +272,10 @@ const CategoriesPage = () => {
               className="px-5 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-60"
             >
               {isSubmitting
-                ? editingSlug
+                ? editingCategoryRef
                   ? "Updating..."
                   : "Creating..."
-                : editingSlug
+                : editingCategoryRef
                 ? "Update Category"
                 : "Create Category"}
             </button>
@@ -272,6 +311,9 @@ const CategoriesPage = () => {
                     Name
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Group
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Slug
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -288,6 +330,9 @@ const CategoriesPage = () => {
                   <tr key={category._id}>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {category.name}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 uppercase tracking-[0.2em] text-xs">
+                      {category.collectionGroup || "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {category.slug}
@@ -310,7 +355,7 @@ const CategoriesPage = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(category.slug)}
+                        onClick={() => handleDelete(category)}
                         className="text-sm text-red-600 hover:text-red-800"
                       >
                         Delete

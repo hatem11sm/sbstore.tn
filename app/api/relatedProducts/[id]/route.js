@@ -20,9 +20,17 @@ export const GET = async (req, { params }) => {
       message: "Product not found",
     });
   } else {
-    const relatedProducts = await ClothingProduct.find({
+    const relatedQuery = {
       categorySlug: product.categorySlug,
-    });
+      categoryCollectionGroup: product.categoryCollectionGroup || "woman",
+      _id: { $ne: product._id },
+    };
+
+    if (product.categoryId) {
+      relatedQuery.categoryId = product.categoryId;
+    }
+
+    const relatedProducts = await ClothingProduct.find(relatedQuery);
     const shuffledProducts = shuffleArray(relatedProducts);
     const randomRelatedProducts = shuffledProducts.slice(0, 4);
     return NextResponse.json({

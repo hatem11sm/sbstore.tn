@@ -3,23 +3,27 @@ import { ProductContext } from "@/Context/CreateProduct";
 import Image from "next/image";
 import Link from "next/link";
 import { useContext } from "react";
+import { buildCategoryPath } from "@/utils/categoryPaths";
 
 const fallbackCategories = [
   {
     name: "Men",
     slug: "men",
+    collectionGroup: "man",
     image:
       "https://images.unsplash.com/photo-1610384104075-e05c8cf200c3?q=80&w=1964&auto=format&fit=crop",
   },
   {
     name: "Kids",
     slug: "kids",
+    collectionGroup: "kids",
     image:
       "https://images.unsplash.com/photo-1627859774205-83c1279a6382?q=80&w=1974&auto=format&fit=crop",
   },
   {
     name: "Women",
     slug: "women",
+    collectionGroup: "woman",
     image:
       "https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=1974&auto=format&fit=crop",
   },
@@ -35,7 +39,7 @@ const CategoriesPage = () => {
         {displayCategories.map((category) => (
           <li key={category._id || category.slug}>
             <Link
-              href={`/category/${category.slug}`}
+              href={buildCategoryPath(category)}
               className="group relative block rounded-md overflow-hidden"
             >
               <Image

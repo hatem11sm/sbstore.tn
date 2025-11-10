@@ -4,22 +4,29 @@ import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 import Image from "next/image";
 import Link from "next/link";
 import { useContext, useMemo } from "react";
+import {
+  buildCategoryPath,
+  normalizeCollectionGroup,
+} from "@/utils/categoryPaths";
 
 const fallbackCategories = [
   {
     name: "Men",
     slug: "men",
     image: "/images/models/man-fashion.jpg",
+    collectionGroup: "man",
   },
   {
     name: "Kids",
     slug: "kids",
     image: "/images/models/kids-fashion.jpg",
+    collectionGroup: "kids",
   },
   {
     name: "Women",
     slug: "women",
     image: "/images/models/woman-fashion.jpg",
+    collectionGroup: "woman",
   },
 ];
 
@@ -35,6 +42,7 @@ const Collection = () => {
       key: category._id || `${category.slug}-${index}`,
       name: category.name,
       slug: category.slug,
+      collectionGroup: normalizeCollectionGroup(category.collectionGroup),
       image: category.image || fallbackCategories[index % fallbackCategories.length].image,
     }));
 
@@ -82,7 +90,7 @@ const Collection = () => {
                 }
               >
                 <Link
-                  href={`/category/${category.slug}`}
+                  href={buildCategoryPath(category)}
                   className="group relative block"
                 >
                   <Image

@@ -2,6 +2,7 @@
 import { Context } from "@/Context/Context";
 import Link from "next/link";
 import { useContext } from "react";
+import { buildCategoryPath } from "@/utils/categoryPaths";
 
 const Mobile = ({ setIsOpen, categories }) => {
   const { user, handleLogout } = useContext(Context);
@@ -78,7 +79,7 @@ const Mobile = ({ setIsOpen, categories }) => {
                   {categories?.map((category) => (
                     <li key={category._id}>
                       <Link
-                        href={`/category/${category.slug}`}
+                        href={buildCategoryPath(category)}
                         className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                         onClick={() => setIsOpen(false)}
                       >

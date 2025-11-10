@@ -1,11 +1,88 @@
 "use client";
 import { Context } from "@/Context/Context";
+import { ProductContext } from "@/Context/CreateProduct";
 import Image from "next/image";
 import Link from "next/link";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
+import {
+  buildCategoryPath,
+  buildCategoryPathFromParts,
+  normalizeCollectionGroup,
+} from "@/utils/categoryPaths";
 
 const Footer = () => {
   const { user } = useContext(Context);
+  const { categories } = useContext(ProductContext);
+
+  const groupedCategories = useMemo(() => {
+    const template = { woman: [], man: [], kids: [] };
+    (categories || []).forEach((category) => {
+      const key = normalizeCollectionGroup(category.collectionGroup);
+      if (!template[key]) template[key] = [];
+      template[key].push(category);
+    });
+    Object.keys(template).forEach((key) => {
+      template[key] = template[key].sort((a, b) =>
+        (a.name || "").localeCompare(b.name || "")
+      );
+    });
+    return template;
+  }, [categories]);
+
+  const footerCollections = useMemo(() => {
+    const resolveHref = (hint, fallbackGroup) => {
+      const normalizedGroup = normalizeCollectionGroup(fallbackGroup);
+      const normalizedHint = (hint || "").toLowerCase();
+      if (!normalizedHint) {
+        return `/${normalizedGroup}`;
+      }
+      const exactMatch = categories?.find(
+        (category) =>
+          category.slug?.toLowerCase() === normalizedHint &&
+          normalizeCollectionGroup(category.collectionGroup) === normalizedGroup
+      );
+      if (exactMatch) {
+        return buildCategoryPath(exactMatch);
+      }
+      const looseMatch = categories?.find((category) => {
+        const slug = category.slug?.toLowerCase() || "";
+        const label = category.name?.toLowerCase() || "";
+        return slug.includes(normalizedHint) || label.includes(normalizedHint);
+      });
+      if (looseMatch) {
+        return buildCategoryPath(looseMatch);
+      }
+      return buildCategoryPathFromParts(normalizedGroup, normalizedHint);
+    };
+
+    return [
+      {
+        key: "woman",
+        label: "Woman",
+        tagline: "Edition curated for her wardrobe.",
+        href: resolveHref("woman", "woman"),
+        items: groupedCategories.woman || [],
+        collectionGroup: "woman",
+      },
+      {
+        key: "man",
+        label: "Man",
+        tagline: "Modern tailoring and essentials.",
+        href: resolveHref("man", "man"),
+        items: groupedCategories.man || [],
+        collectionGroup: "man",
+      },
+      {
+        key: "kids",
+        label: "Kids",
+        tagline: "Play-ready looks in motion.",
+        href: resolveHref("kids", "kids"),
+        items: groupedCategories.kids || [],
+        collectionGroup: "kids",
+      },
+    ];
+  }, [categories, groupedCategories]);
+
   return (
     <>
       {!user?.data?.isAdmin && (
@@ -55,9 +132,9 @@ const Footer = () => {
           />
         </div>
 
-        <div className="px-4 py-16 sm:px-6 lg:col-span-3 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-            <div>
+        <div className="px-4 py-16 sm:px-6 lg:col-span-3 lg:px-12">
+          <div className="grid gap-12 lg:grid-cols-[1.1fr,2fr]">
+            <div className="space-y-10">
               <p>
                 <span className="text-xs uppercase tracking-wide text-gray-500">
                   {" "}
@@ -128,99 +205,52 @@ const Footer = () => {
                 </li>
               </ul>
             </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <p className="font-medium text-gray-900">Services</p>
-
-                <ul className="mt-6 space-y-4 text-sm">
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {footerCollections.map((collection) => (
+                <div key={collection.key}>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={collection.href}
+                      className="text-xs uppercase tracking-[0.45em] text-gray-500 hover:text-gray-900"
                     >
-                      {" "}
-                      Clothing Style
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      Fashion Design
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      Design
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      Branding
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      Marketing
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <p className="font-medium text-gray-900">Company</p>
-
-                <ul className="mt-6 space-y-4 text-sm">
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      About{" "}
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      Contact{" "}
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      href="#!"
-                      className="text-gray-700 transition hover:opacity-75"
-                    >
-                      {" "}
-                      Accounts Review{" "}
-                    </a>
-                  </li>
-                </ul>
-              </div>
+                      {collection.label}
+                    </Link>
+                    <span className="text-[0.6rem] uppercase tracking-[0.4em] text-gray-400">
+                      {collection.items.length
+                        ? `${collection.items.length} items`
+                        : "Soon"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-400">
+                    {collection.tagline}
+                  </p>
+                  {collection.items.length ? (
+                    <ul className="mt-5 space-y-2 text-sm">
+                      {collection.items.slice(0, 6).map((category) => (
+                        <li key={category._id}>
+                          <Link
+                            href={buildCategoryPath(category)}
+                            className="group flex items-center justify-between text-gray-700 transition hover:text-gray-900"
+                          >
+                            <span className="font-medium uppercase tracking-[0.2em]">
+                              {category.name}
+                            </span>
+                            {category.subcategories?.length ? (
+                              <span className="text-[0.55rem] uppercase tracking-[0.35em] text-gray-400 group-hover:text-gray-600">
+                                {category.subcategories.slice(0, 2).join(" · ")}
+                              </span>
+                            ) : null}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-5 text-xs uppercase tracking-[0.35em] text-gray-300">
+                      Add categories in admin to display here.
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 

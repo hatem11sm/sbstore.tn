@@ -6,6 +6,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import SInglePRoductSkeleton from "../../SInglePRoductSkeleton";
+import {
+  buildCategoryKey,
+  parseCategoryKey,
+  normalizeCollectionGroup,
+} from "@/utils/categoryPaths";
 
 const Product = () => {
   const router = useRouter();
@@ -25,6 +30,8 @@ const Product = () => {
         setProduct({
           ...productData,
           categorySlug: productData.categorySlug,
+          categoryCollectionGroup:
+            productData.categoryCollectionGroup || "woman",
         });
         setSelectedSubcategory(productData.subcategory || "");
         setLoading(false);
@@ -46,22 +53,36 @@ const Product = () => {
       return;
     }
     const matchedCategory = categories.find(
-      (item) => item.slug === product.categorySlug
+      (item) =>
+        item.slug === product.categorySlug &&
+        normalizeCollectionGroup(item.collectionGroup) ===
+          normalizeCollectionGroup(product.categoryCollectionGroup)
     );
     const subs = matchedCategory?.subcategories || [];
     setAvailableSubcategories(subs);
     if (selectedSubcategory && !subs.includes(selectedSubcategory)) {
       setSelectedSubcategory("");
     }
-  }, [product?.categorySlug, categories, selectedSubcategory]);
+  }, [
+    product?.categorySlug,
+    product?.categoryCollectionGroup,
+    categories,
+    selectedSubcategory,
+  ]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "categorySlug") {
-      const matchedCategory = categories.find((item) => item.slug === value);
+    if (name === "categoryComposite") {
+      const { slug: nextSlug, collectionGroup } = parseCategoryKey(value);
+      const matchedCategory = categories.find(
+        (item) =>
+          item.slug === nextSlug &&
+          normalizeCollectionGroup(item.collectionGroup) === collectionGroup
+      );
       setProduct((prev) => ({
         ...prev,
-        categorySlug: value,
+        categorySlug: nextSlug,
+        categoryCollectionGroup: collectionGroup,
         category: matchedCategory?.name || prev?.category || "",
       }));
       setSelectedSubcategory("");
@@ -81,6 +102,7 @@ const Product = () => {
         price: product.price,
         description: product.description,
         categorySlug: product.categorySlug,
+        categoryCollectionGroup: product.categoryCollectionGroup,
         subcategory: selectedSubcategory,
         mainImage: product.mainImage,
       });
@@ -199,20 +221,27 @@ const Product = () => {
             Category:
           </label>
           <select
-            name="categorySlug"
-            id="categorySlug"
+            name="categoryComposite"
+            id="categoryComposite"
             className="w-full border border-gray-300 p-2 rounded-md mt-2"
             placeholder="Select category"
             required
-            value={product?.categorySlug || ""}
+            value={
+              product
+                ? buildCategoryKey({
+                    slug: product.categorySlug,
+                    collectionGroup: product.categoryCollectionGroup,
+                  })
+                : ""
+            }
             onChange={handleInputChange}
           >
             <option value="" disabled>
               Select category
             </option>
             {categories.map((item) => (
-              <option key={item._id} value={item.slug}>
-                {item.name}
+              <option key={item._id} value={buildCategoryKey(item)}>
+                {item.name} · {item.collectionGroup?.toUpperCase() || "WOMAN"}
               </option>
             ))}
           </select>

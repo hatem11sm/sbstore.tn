@@ -27,6 +27,18 @@ const clothingProduct = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
+    index: true,
+  },
+  categoryCollectionGroup: {
+    type: String,
+    enum: ["woman", "man", "kids"],
+    default: "woman",
+    lowercase: true,
+    trim: true,
+  },
   subcategory: {
     type: String,
     trim: true,
@@ -46,6 +58,9 @@ const clothingProduct = new mongoose.Schema({
 clothingProduct.pre("validate", function ensureCategorySlug(next) {
   if (this.category && !this.categorySlug) {
     this.categorySlug = slugify(this.category);
+  }
+  if (!this.categoryCollectionGroup) {
+    this.categoryCollectionGroup = "woman";
   }
   next();
 });

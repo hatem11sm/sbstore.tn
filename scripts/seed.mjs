@@ -19,6 +19,7 @@ const ORDER_COUNT = 8;
 const CATEGORY_DATA = [
   {
     name: "Men",
+    collectionGroup: "man",
     description:
       "Versatile hello menswear staples, footwear, and accessories for every day.",
     image:
@@ -32,6 +33,7 @@ const CATEGORY_DATA = [
   },
   {
     name: "Women",
+    collectionGroup: "woman",
     description:
       "Fresh silhouettes, elevated basics, and standout pieces for women.",
     image:
@@ -45,6 +47,7 @@ const CATEGORY_DATA = [
   },
   {
     name: "Kids",
+    collectionGroup: "kids",
     description:
       "Playful outfits and comfy essentials for boys, girls, and infants.",
     image:
@@ -85,6 +88,8 @@ const buildProductPayload = (categoryDoc, sourceInfo) => {
     price: faker.number.int({ min: 25, max: 220 }),
     category: categoryDoc.name,
     categorySlug: categoryDoc.slug,
+    categoryId: categoryDoc._id,
+    categoryCollectionGroup: categoryDoc.collectionGroup,
     subcategory,
     mainImage:
       imagePool.length > 0
@@ -148,12 +153,15 @@ const seedDatabase = async () => {
     const userDocs = await User.insertMany(users);
 
     const categoryDocs = await Category.insertMany(
-      CATEGORY_DATA.map(({ name, description, image, subcategories }) => ({
-        name,
-        description,
-        image,
-        subcategories: [...new Set(subcategories)],
-      }))
+      CATEGORY_DATA.map(
+        ({ name, description, image, subcategories, collectionGroup }) => ({
+          name,
+          description,
+          image,
+          collectionGroup,
+          subcategories: [...new Set(subcategories)],
+        })
+      )
     );
 
     const categorySourceByName = CATEGORY_DATA.reduce((accumulator, item) => {

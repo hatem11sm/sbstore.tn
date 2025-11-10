@@ -2,6 +2,7 @@
 
 import { ProductContext } from "@/Context/CreateProduct";
 import slugify from "@/utils/slugify";
+import { buildCategoryKey } from "@/utils/categoryPaths";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   ArrowPathIcon,
@@ -66,8 +67,10 @@ const Products = () => {
     if (!categories?.length) return [];
     return categories
       .map((category) => ({
-        label: category.name,
-        value: category.slug,
+        label: `${category.name} · ${
+          (category.collectionGroup || "woman").toUpperCase()
+        }`,
+        value: buildCategoryKey(category),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [categories]);
@@ -82,11 +85,21 @@ const Products = () => {
           product.createdAt || product.updatedAt
             ? new Date(product.updatedAt ?? product.createdAt)
             : parseObjectIdDate(product._id);
+        const normalizedSlug = product.categorySlug
+          ? product.categorySlug
+          : slugify(product.category ?? "misc");
+        const categoryCollectionGroup =
+          product.categoryCollectionGroup || "woman";
         return {
           ...product,
           colorToken,
           createdAt,
-          categorySlug: product.categorySlug ?? slugify(product.category ?? "misc"),
+          categorySlug: normalizedSlug,
+          categoryCollectionGroup,
+          categoryKey: buildCategoryKey({
+            slug: normalizedSlug,
+            collectionGroup: categoryCollectionGroup,
+          }),
         };
       }),
     [rawProducts]
@@ -134,8 +147,8 @@ const Products = () => {
     let result = preparedProducts;
 
     if (selectedCategories.length) {
-      const slugSet = new Set(selectedCategories);
-      result = result.filter((product) => slugSet.has(product.categorySlug));
+      const keySet = new Set(selectedCategories);
+      result = result.filter((product) => keySet.has(product.categoryKey));
     }
 
     if (selectedColors.length) {

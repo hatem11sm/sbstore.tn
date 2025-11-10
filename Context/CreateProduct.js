@@ -3,6 +3,7 @@ import axios from "axios";
 import { createContext, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { parseCategoryKey } from "@/utils/categoryPaths";
 
 export const ProductContext = createContext();
 
@@ -80,11 +81,20 @@ export const ProductContextProvider = ({ children }) => {
         mainImage: media
       });
 
-      const res = await axios.post("/api/product", {
+      const { slug: selectedSlug, collectionGroup: selectedGroup } =
+        parseCategoryKey(category);
+
+      if (!selectedSlug) {
+        toast.error("Please pick a category");
+        return;
+      }
+
+      await axios.post("/api/product", {
         name: name,
         price: price,
         description: description,
-        categorySlug: category,
+        categorySlug: selectedSlug,
+        categoryCollectionGroup: selectedGroup,
         subcategory: subcategory?.trim() || "",
         mainImage: media,
       });

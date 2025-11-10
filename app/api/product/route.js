@@ -2,6 +2,7 @@ import connectDB from "@/db/Database";
 import Category from "@/models/Category";
 import ClothingProduct from "@/models/Product";
 import slugify from "@/utils/slugify";
+import { normalizeCollectionGroup, buildCategoryKey } from "@/utils/categoryPaths";
 import { NextResponse } from "next/server";
 
 export const POST = async (req) => {
@@ -16,6 +17,7 @@ export const POST = async (req) => {
       description,
       category,
       categorySlug,
+      categoryCollectionGroup,
       subcategory = "",
       mainImage,
     } = body;
@@ -28,6 +30,7 @@ export const POST = async (req) => {
       category: { value: category, type: typeof category },
       categorySlug: { value: categorySlug, type: typeof categorySlug },
       subcategory: { value: subcategory, type: typeof subcategory },
+      categoryCollectionGroup: { value: categoryCollectionGroup, type: typeof categoryCollectionGroup },
       mainImage: { value: mainImage, type: typeof mainImage }
     });
 
@@ -48,8 +51,32 @@ export const POST = async (req) => {
     }
 
     const resolvedSlug = (categorySlug || slugify(category || "")).toLowerCase();
+    const normalizedGroup = categoryCollectionGroup
+      ? normalizeCollectionGroup(categoryCollectionGroup)
+      : null;
 
-    const matchedCategory = await Category.findOne({ slug: resolvedSlug });
+    const categoryQuery = { slug: resolvedSlug };
+    if (normalizedGroup) {
+      categoryQuery.collectionGroup = normalizedGroup;
+    }
+
+    let matchedCategory = await Category.findOne(categoryQuery);
+
+    if (!matchedCategory && !normalizedGroup) {
+      const candidates = await Category.find({ slug: resolvedSlug });
+      if (candidates.length === 1) {
+        matchedCategory = candidates[0];
+      } else if (candidates.length > 1) {
+        return NextResponse.json(
+          {
+            status: 400,
+            message:
+              "Multiple collections use this category. Please specify the collection group.",
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!matchedCategory) {
       return NextResponse.json(
@@ -84,6 +111,8 @@ export const POST = async (req) => {
       description: String(description).trim(),
       category: matchedCategory.name,
       categorySlug: matchedCategory.slug,
+      categoryId: matchedCategory._id,
+      categoryCollectionGroup: matchedCategory.collectionGroup,
       subcategory: normalizedSubcategory,
       mainImage: String(mainImage).trim()
     };
@@ -102,7 +131,10 @@ export const POST = async (req) => {
     return NextResponse.json({
       status: 201,
       message: "Product created successfully",
-      data: clothingProduct,
+      data: {
+        ...clothingProduct.toObject(),
+        categoryKey: buildCategoryKey(matchedCategory),
+      },
     });
   } catch (error) {
     console.error("Error creating product:", error);
