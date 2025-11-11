@@ -8,7 +8,7 @@ import { Context } from "@/Context/Context";
 import { ProductContext } from "@/Context/CreateProduct";
 import Image from "next/image";
 import withCloudinaryProxy from "@/utils/cloudinaryProxy";
-import { LuPanelLeftOpen, LuX } from "react-icons/lu";
+import { LuAlignJustify, LuX } from "react-icons/lu";
 import {
   buildCategoryPath,
   buildCategoryPathFromParts,
@@ -260,10 +260,10 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowCollectionMenu(true)}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-300 text-gray-900 transition hover:border-gray-900 hover:text-gray-900"
+              className="relative hidden h-12 w-12 items-center justify-center rounded-full border border-gray-300 text-gray-900 transition hover:border-gray-900 hover:text-gray-900 md:flex"
               aria-label="Open curated collections menu"
             >
-              <LuPanelLeftOpen className="h-5 w-5" />
+              <LuAlignJustify className="h-5 w-5" />
             </button>
             <Link className="group flex items-center gap-4" href="/">
               <span className="sr-only">Home</span>
@@ -550,8 +550,15 @@ const Header = () => {
         </div>
       )}
       {isOpen && (
-        <div className="absolute left-0 top-0 w-52 md:hidden bg-white shadow-lg rounded-lg z-50">
-          <Mobile setIsOpen={setIsOpen} categories={categories} />
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            aria-label="Close mobile navigation"
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="relative ml-auto h-full w-full max-w-md">
+            <Mobile setIsOpen={setIsOpen} categories={categories} />
+          </div>
         </div>
       )}
       {isCartOpen && (
