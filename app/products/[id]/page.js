@@ -46,8 +46,8 @@ const Product = () => {
       try {
         const res = await axios.get(`/api/product/${id}`, { timeout: 8000 });
         setProduct(res.data.data);
-      } catch (error) {
-        console.error("Failed to fetch product:", error);
+      } catch {
+        setProduct({});
       }
     };
     const fetchReviews = async () => {
@@ -55,8 +55,7 @@ const Product = () => {
         const res = await axios.get(`/api/reviews/${id}`, { timeout: 8000 });
         setReviews(res.data.data || []);
         setReviewSummary(res.data.summary || { total: 0, average: 0 });
-      } catch (error) {
-        console.error("Failed to fetch reviews:", error);
+      } catch {
         setReviews([]);
         setReviewSummary({ total: 0, average: 0 });
       }

@@ -139,8 +139,7 @@ export const ProductContextProvider = ({ children }) => {
           data: mergeLuxuryFahdFallbackProducts(res.data?.data),
         });
       })
-      .catch((error) => {
-        console.error("Failed to fetch products:", error);
+      .catch(() => {
         setProducts({
           status: 200,
           message: "fallback",
@@ -156,8 +155,8 @@ export const ProductContextProvider = ({ children }) => {
       .then((res) => {
         setCategories(res.data?.data || []);
       })
-      .catch((error) => {
-        console.error("Failed to fetch categories:", error);
+      .catch(() => {
+        setCategories([]);
       });
   }, []);
 
@@ -171,8 +170,7 @@ export const ProductContextProvider = ({ children }) => {
       .then((res) => {
         setVendors(mergeLuxuryFahdFallbackVendors(res.data?.data));
       })
-      .catch((error) => {
-        console.error("Failed to fetch vendors:", error);
+      .catch(() => {
         setVendors([luxuryFahdFallbackVendor]);
       });
   }, []);
