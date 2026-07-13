@@ -332,14 +332,7 @@ const Product = () => {
 
           <div className="py-8">
             <div className="grid gap-3">
-              {product?.hidePrice ? (
-                <Link
-                  href={`/assistant?q=${encodeURIComponent(`Je veux connaitre le prix de ${product?.name} chez ${vendorName}`)}`}
-                  className="flex w-full items-center justify-center bg-black px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-white transition hover:bg-neutral-700"
-                >
-                  Demander le prix
-                </Link>
-              ) : user?.data ? (
+              {user?.data ? (
                 <button
                   onClick={() => addItemToCart(product)}
                   className="flex w-full items-center justify-center bg-black px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-white transition hover:bg-neutral-700"
@@ -351,9 +344,18 @@ const Product = () => {
                   href="/loginpage"
                   className="flex w-full items-center justify-center bg-black px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-white transition hover:bg-neutral-700"
                 >
-                  Connectez-vous pour commander
+                  Ajouter au panier
                 </Link>
               )}
+
+              {product?.hidePrice ? (
+                <Link
+                  href={`/assistant?q=${encodeURIComponent(`Je veux connaitre le prix de ${product?.name} chez ${vendorName}`)}`}
+                  className="flex w-full items-center justify-center border border-black/10 px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-black transition hover:border-black"
+                >
+                  Demander le prix
+                </Link>
+              ) : null}
 
               {user?.data ? (
                 <button
