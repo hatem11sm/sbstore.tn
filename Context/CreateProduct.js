@@ -4,6 +4,12 @@ import { createContext, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { parseCategoryKey } from "@/utils/categoryPaths";
+import {
+  luxuryFahdFallbackProducts,
+  luxuryFahdFallbackVendor,
+  mergeLuxuryFahdFallbackProducts,
+  mergeLuxuryFahdFallbackVendors,
+} from "@/data/luxuryFahdFallback";
 
 export const ProductContext = createContext();
 
@@ -17,11 +23,15 @@ export const ProductContextProvider = ({ children }) => {
   const [media, setMedia] = useState("");
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [vendors, setVendors] = useState([]);
+  const [vendors, setVendors] = useState([luxuryFahdFallbackVendor]);
   const [vendorId, setVendorId] = useState("");
   const router = useRouter();
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState({
+    status: 200,
+    message: "fallback",
+    data: luxuryFahdFallbackProducts,
+  });
 
   // Upload image using ImgBB API
   useEffect(() => {
@@ -122,12 +132,20 @@ export const ProductContextProvider = ({ children }) => {
   // Get all products
   useEffect(() => {
     axios
-      .get("/api/product")
+      .get("/api/product", { timeout: 8000 })
       .then((res) => {
-        setProducts(res.data);
+        setProducts({
+          ...res.data,
+          data: mergeLuxuryFahdFallbackProducts(res.data?.data),
+        });
       })
       .catch((error) => {
         console.error("Failed to fetch products:", error);
+        setProducts({
+          status: 200,
+          message: "fallback",
+          data: luxuryFahdFallbackProducts,
+        });
       });
   }, []);
 
@@ -149,12 +167,13 @@ export const ProductContextProvider = ({ children }) => {
 
   const refreshVendors = useCallback(() => {
     axios
-      .get("/api/vendors")
+      .get("/api/vendors", { timeout: 8000 })
       .then((res) => {
-        setVendors(res.data?.data || []);
+        setVendors(mergeLuxuryFahdFallbackVendors(res.data?.data));
       })
       .catch((error) => {
         console.error("Failed to fetch vendors:", error);
+        setVendors([luxuryFahdFallbackVendor]);
       });
   }, []);
 

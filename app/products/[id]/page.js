@@ -4,6 +4,7 @@ import { useCompare } from "@/Context/CompareProvider";
 import { Context } from "@/Context/Context";
 import RelatedProducts from "@/components/RelatedProducts";
 import Skeleton from "@/components/Skeleton";
+import { luxuryFahdFallbackProducts } from "@/data/luxuryFahdFallback";
 import { calculateVendorTrustScore, formatRating, getVendorTrustLabel } from "@/utils/marketplaceScore";
 import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 import axios from "axios";
@@ -33,13 +34,32 @@ const Product = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const res = await axios.get(`/api/product/${id}`);
-      setProduct(res.data.data);
+      const fallbackProduct = luxuryFahdFallbackProducts.find(
+        (item) => String(item._id) === String(id)
+      );
+
+      if (fallbackProduct) {
+        setProduct(fallbackProduct);
+        return;
+      }
+
+      try {
+        const res = await axios.get(`/api/product/${id}`, { timeout: 8000 });
+        setProduct(res.data.data);
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      }
     };
     const fetchReviews = async () => {
-      const res = await axios.get(`/api/reviews/${id}`);
-      setReviews(res.data.data || []);
-      setReviewSummary(res.data.summary || { total: 0, average: 0 });
+      try {
+        const res = await axios.get(`/api/reviews/${id}`, { timeout: 8000 });
+        setReviews(res.data.data || []);
+        setReviewSummary(res.data.summary || { total: 0, average: 0 });
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+        setReviews([]);
+        setReviewSummary({ total: 0, average: 0 });
+      }
     };
 
     fetchProduct();
