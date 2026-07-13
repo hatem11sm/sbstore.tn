@@ -12,7 +12,6 @@ import {
 } from "@/utils/requestSecurity";
 
 export const POST = async (req) => {
-  await connectDB();
   const limiter = enforceRateLimit({
     key: getClientIdentifier(req, "login"),
     limit: 6,
@@ -31,6 +30,8 @@ export const POST = async (req) => {
 
   const { email, password } = await req.json();
   try {
+    await connectDB();
+
     if (!email || !password) {
       return NextResponse.json({
         message: "Veuillez remplir tous les champs",
@@ -67,10 +68,10 @@ export const POST = async (req) => {
           );
         } else {
           const authToken = jwt.sign({ 
-            id: user._id,
+            id: String(user._id),
             isAdmin: user.isAdmin,
             role: user.role,
-            vendorId: user.vendorId || null,
+            vendorId: user.vendorId ? String(user.vendorId) : null,
           }, process.env.JWT_SECRET, {
             expiresIn: "7d",
             issuer: "sbstore",
@@ -88,18 +89,19 @@ export const POST = async (req) => {
             status: 201,
             message: "Connexion réussie",
             data: {
-              id: user._id,
+              id: String(user._id),
               name: user.name,
               email: user.email,
               isAdmin: user.isAdmin,
               role: user.role,
-              vendorId: user.vendorId || null,
+              vendorId: user.vendorId ? String(user.vendorId) : null,
             }
           });
         }
       }
     }
   } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json(
       {
       status: 400,
