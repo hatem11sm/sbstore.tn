@@ -7,27 +7,31 @@ import Footer from "@/components/Footer";
 import { ProductContextProvider } from "@/Context/CreateProduct";
 import { Toaster } from "react-hot-toast";
 import CartProvider from "@/Context/CartProvider";
+import CompareProvider from "@/Context/CompareProvider";
 
 const inter = Montserrat({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Store",
-  description: "A store for all your needs",
+  title: "SB Store Tunisie - Marketplace multi-boutiques",
+  description:
+    "Plateforme multi-boutiques en Tunisie pour decouvrir plusieurs vendeurs, comparer les produits et commander en TND.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={inter.className}>
         <NextTopLoader color="#000" height={4} />
         <ContextProvider>
           <ProductContextProvider>
-            <CartProvider>
-              <Header />
-              <Toaster />
-              {children}
-              <Footer />
-            </CartProvider>
+            <CompareProvider>
+              <CartProvider>
+                <Header />
+                <Toaster />
+                {children}
+                <Footer />
+              </CartProvider>
+            </CompareProvider>
           </ProductContextProvider>
         </ContextProvider>
       </body>

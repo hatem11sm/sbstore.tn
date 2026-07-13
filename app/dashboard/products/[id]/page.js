@@ -1,4 +1,5 @@
 "use client";
+import { Context } from "@/Context/Context";
 import { ProductContext } from "@/Context/CreateProduct";
 import axios from "axios";
 import Image from "next/image";
@@ -16,11 +17,17 @@ const Product = () => {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
-  const { categories } = useContext(ProductContext);
+  const { categories, vendors } = useContext(ProductContext);
+  const { user } = useContext(Context);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [availableSubcategories, setAvailableSubcategories] = useState([]);
+  const isVendorUser = user?.data?.role === "vendor";
+  const scopedVendorId = user?.data?.vendorId?._id || user?.data?.vendorId || "";
+  const availableVendors = isVendorUser
+    ? vendors.filter((vendor) => vendor._id === scopedVendorId)
+    : vendors;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -32,6 +39,10 @@ const Product = () => {
           categorySlug: productData.categorySlug,
           categoryCollectionGroup:
             productData.categoryCollectionGroup || "woman",
+          vendorId:
+            productData.vendorId?._id ||
+            productData.vendorId ||
+            "",
         });
         setSelectedSubcategory(productData.subcategory || "");
         setLoading(false);
@@ -46,6 +57,17 @@ const Product = () => {
       fetchProduct();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (
+      isVendorUser &&
+      scopedVendorId &&
+      product?.vendorId &&
+      String(product.vendorId) !== String(scopedVendorId)
+    ) {
+      router.replace("/dashboard/products");
+    }
+  }, [isVendorUser, scopedVendorId, product?.vendorId, router]);
 
   useEffect(() => {
     if (!product?.categorySlug) {
@@ -104,6 +126,7 @@ const Product = () => {
         categorySlug: product.categorySlug,
         categoryCollectionGroup: product.categoryCollectionGroup,
         subcategory: selectedSubcategory,
+        vendorId: product.vendorId || "",
         mainImage: product.mainImage,
       });
       toast.success("Product updated successfully");
@@ -269,6 +292,30 @@ const Product = () => {
             {availableSubcategories.map((sub) => (
               <option key={sub} value={sub}>
                 {sub}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col items-center justify-center  mt-3">
+          <label
+            htmlFor="vendorId"
+            className=" w-full flex items-start justify-start  text-gray-700 text-sm md:text-base font-medium"
+          >
+            {isVendorUser ? "Votre boutique:" : "Boutique / fournisseur:"}
+          </label>
+          <select
+            name="vendorId"
+            id="vendorId"
+            className="w-full border border-gray-300 p-2 rounded-md mt-2"
+            value={product?.vendorId || ""}
+            onChange={handleInputChange}
+            disabled={isVendorUser}
+          >
+            {!isVendorUser && <option value="">SB Store (par defaut)</option>}
+            {availableVendors.map((vendor) => (
+              <option key={vendor._id} value={vendor._id}>
+                {vendor.name}
+                {vendor.city ? ` · ${vendor.city}` : ""}
               </option>
             ))}
           </select>

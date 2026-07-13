@@ -1,14 +1,18 @@
 "use client";
 
+import { AdminContext } from "@/Context/AdminProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useContext, useMemo } from "react";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { HiOutlinePlusCircle } from "react-icons/hi2";
 import { FaRegListAlt, FaUsers } from "react-icons/fa";
 import { PiPackage } from "react-icons/pi";
 import { LuShoppingBag } from "react-icons/lu";
+import { HiOutlineBuildingStorefront } from "react-icons/hi2";
+import { TbDiscount2 } from "react-icons/tb";
 
-const navItems = [
+const adminNavItems = [
   {
     href: "/dashboard",
     label: "Overview",
@@ -23,6 +27,16 @@ const navItems = [
     href: "/dashboard/categories",
     label: "Categories",
     icon: FaRegListAlt,
+  },
+  {
+    href: "/dashboard/vendors",
+    label: "Boutiques",
+    icon: HiOutlineBuildingStorefront,
+  },
+  {
+    href: "/dashboard/promos",
+    label: "Codes promo",
+    icon: TbDiscount2,
   },
   {
     href: "/dashboard/users",
@@ -43,6 +57,43 @@ const navItems = [
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const { isAdminView, scopedVendor } = useContext(AdminContext);
+
+  const navItems = useMemo(() => {
+    if (isAdminView) {
+      return adminNavItems;
+    }
+
+    return [
+      {
+        href: "/dashboard",
+        label: "Mon activité",
+        icon: MdOutlineSpaceDashboard,
+      },
+      {
+        href: "/dashboard/create",
+        label: "Ajouter un produit",
+        icon: HiOutlinePlusCircle,
+      },
+      {
+        href: "/dashboard/products",
+        label: "Mes produits",
+        icon: PiPackage,
+      },
+      {
+        href: "/dashboard/orders",
+        label: "Mes commandes",
+        icon: LuShoppingBag,
+      },
+      {
+        href: scopedVendor?._id
+          ? `/dashboard/vendors/${scopedVendor._id}`
+          : "/dashboard/vendors",
+        label: "Ma boutique",
+        icon: HiOutlineBuildingStorefront,
+      },
+    ];
+  }, [isAdminView, scopedVendor]);
 
   return (
     <aside className="hidden lg:flex lg:w-72 xl:w-80 flex-col bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-2xl">
@@ -52,7 +103,7 @@ const Sidebar = () => {
             SB Store
           </p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-            Admin Control
+            {isAdminView ? "Admin Control" : "Vendor Studio"}
           </h1>
         </Link>
       </div>
@@ -91,8 +142,9 @@ const Sidebar = () => {
           Tip
         </p>
         <p className="mt-2 leading-relaxed">
-          Stay close to your customers by keeping order statuses up to date and
-          replying quickly to any special notes.
+          {isAdminView
+            ? "Stay close to your customers by keeping order statuses up to date and replying quickly to any special notes."
+            : "Keep your catalogue clean and your order statuses fresh so customers always trust your boutique."}
         </p>
       </div>
     </aside>

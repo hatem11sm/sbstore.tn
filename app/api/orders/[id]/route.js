@@ -1,33 +1,52 @@
 import connectDB from "@/db/Database";
 import Order from "@/models/Order";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
+import {
+  isAdminUser,
+  isVendorUser,
+  requireAuthUser,
+  userOwnsVendor,
+} from "@/utils/serverAuth";
 
 export const GET = async (req, { params }) => {
   await connectDB();
 
   try {
-    // Verify admin authentication
-    const authToken = cookies().get("authToken")?.value || "";
-    if (!authToken) {
-      return NextResponse.json({
-        status: 401,
-        error: "Authentication required",
-      });
+    const { user, error } = await requireAuthUser();
+
+    if (error) {
+      return NextResponse.json(
+        { status: error.status, error: error.message },
+        { status: error.status }
+      );
     }
 
-    const userData = jwt.verify(authToken, process.env.JWT_SECRET);
-    
-    // Get order with user details
-    const order = await Order.findById(params.id)
-      .populate("userId", "name email");
+    const order = await Order.findById(params.id).populate("userId", "name email");
 
     if (!order) {
       return NextResponse.json({
         status: 404,
         error: "Order not found",
       });
+    }
+
+    if (
+      isVendorUser(user) &&
+      !(order.vendorBreakdown || []).some((entry) =>
+        userOwnsVendor(user, entry.vendorId)
+      )
+    ) {
+      return NextResponse.json(
+        { status: 403, error: "Cette commande n’appartient pas à votre boutique" },
+        { status: 403 }
+      );
+    }
+
+    if (!isVendorUser(user) && !isAdminUser(user)) {
+      return NextResponse.json(
+        { status: 403, error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json({

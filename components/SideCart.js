@@ -91,7 +91,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                     <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
                       <div className="flex items-start justify-between">
                         <Dialog.Title className="text-lg font-medium text-gray-900">
-                          Shopping cart
+                          Votre panier
                         </Dialog.Title>
                         <div className="ml-3 flex h-7 items-center">
                           <button
@@ -100,7 +100,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                             onClick={() => setIsCartOpen(false)}
                           >
                             <span className="absolute -inset-0.5" />
-                            <span className="sr-only">Close panel</span>
+                            <span className="sr-only">Fermer le panier</span>
                             <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                           </button>
                         </div>
@@ -155,7 +155,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                                               </p>
                                               <div className="flex flex-1 items-end justify-between text-sm">
                                                 <p className="text-gray-500">
-                                                  Qty {item?.quantity}
+                                                  Qté {item?.quantity}
                                                 </p>
 
                                                 <div className="flex">
@@ -166,7 +166,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                                                     type="button"
                                                     className="font-medium text-[#2f4550] hover:text-[#2f4550]"
                                                   >
-                                                    Remove
+                                                    Retirer
                                                   </button>
                                                 </div>
                                               </div>
@@ -180,7 +180,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                               ) : (
                                 <div className="flex justify-center items-center h-40">
                                   <p className="text-lg font-medium text-gray-900">
-                                    Cart is empty
+                                    Votre panier est vide
                                   </p>
                                 </div>
                               )}
@@ -188,7 +188,7 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                           ) : (
                             <div className="flex justify-center items-center h-40">
                               <p className="text-lg font-medium text-gray-900">
-                                Login to view cart
+                                Connectez-vous pour voir le panier
                               </p>
                             </div>
                           )}
@@ -199,13 +199,13 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                     <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
                       {user?.data && (
                         <div className="flex justify-between text-base font-medium text-gray-900">
-                          <p>Subtotal</p>
+                          <p>Sous-total</p>
                           <p>{totalPrice}.00 Dt</p>
                         </div>
                       )}
                       {user?.data && (
                         <p className="mt-0.5 text-sm text-gray-500">
-                          Shipping and taxes calculated at checkout.
+                          Livraison calculée à l’étape suivante.
                         </p>
                       )}
                       <div className="mt-6">
@@ -225,19 +225,19 @@ const SideCart = ({ setIsCartOpen, isCartOpen }) => {
                             onClick={() => setIsCartOpen(false)}
                             className="flex items-center justify-center rounded-md border border-transparent bg-[#2f4550] px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-[#2f4550]"
                           >
-                            Login to View Cart
+                            Connexion pour voir le panier
                           </Link>
                         )}
                       </div>
                       <div className="mt-6 flex justify-center text-center text-sm text-gray-500">
                         <p>
-                          or{" "}
+                          ou{" "}
                           <Link
                             href="/products"
                             className="font-medium text-[#2f4550] hover:text-[#2f4550]"
                             onClick={() => setIsCartOpen(false)}
                           >
-                            Continue Shopping
+                            Continuer vos achats
                             <span aria-hidden="true"> &rarr;</span>
                           </Link>
                         </p>

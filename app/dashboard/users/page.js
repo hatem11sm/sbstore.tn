@@ -41,24 +41,32 @@ const User = () => {
         </h1>
       </div>
       <div className="w-full p-2 m-2 bg-white rounded-lg shadow-lg">
-        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 rounded-lg text-white">
+        <div className="grid grid-cols-4 gap-4 p-4 bg-gray-800 rounded-lg text-white">
           <div className="font-bold">Name</div>
           <div className="font-bold">Email</div>
           <div className="font-bold">Role</div>
+          <div className="font-bold">Boutique</div>
         </div>
 
         {currentItems.length > 0 ? (
           currentItems.map((item, index) => (
             <div
               key={item._id}
-              className={`w-full border grid md:grid-cols-3 text-sm gap-4 py-4 px-1 md:p-4 hover:bg-gray-200 transition-all duration-200 ${
+              className={`w-full border grid md:grid-cols-4 text-sm gap-4 py-4 px-1 md:p-4 hover:bg-gray-200 transition-all duration-200 ${
                 index % 2 === 0 ? "bg-gray-100" : "bg-white"
               }`}
             >
               <div className="text-gray-600 mx-2">{item.name}</div>
               <div className="text-gray-600 mx-2">{item.email}</div>
               <div className="text-sm text-gray-500 mx-2">
-                {item.isAdmin ? "Admin" : "User"}
+                {item.isAdmin || item.role === "admin"
+                  ? "Admin"
+                  : item.role === "vendor"
+                    ? "Vendor"
+                    : "Client"}
+              </div>
+              <div className="text-sm text-gray-500 mx-2">
+                {item.vendorId?.name || "—"}
               </div>
             </div>
           ))

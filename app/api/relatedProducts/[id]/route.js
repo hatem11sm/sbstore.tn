@@ -1,5 +1,6 @@
 import connectDB from "@/db/Database";
 import ClothingProduct from "@/models/Product";
+import "@/models/Vendor";
 import { NextResponse } from "next/server";
 
 function shuffleArray(array) {
@@ -30,7 +31,10 @@ export const GET = async (req, { params }) => {
       relatedQuery.categoryId = product.categoryId;
     }
 
-    const relatedProducts = await ClothingProduct.find(relatedQuery);
+    const relatedProducts = await ClothingProduct.find(relatedQuery).populate(
+      "vendorId",
+      "name slug city status"
+    );
     const shuffledProducts = shuffleArray(relatedProducts);
     const randomRelatedProducts = shuffledProducts.slice(0, 4);
     return NextResponse.json({

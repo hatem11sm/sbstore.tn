@@ -2,13 +2,14 @@
 import Header from "./Header";
 import { useContext, useState, useEffect } from "react";
 import { Context } from "@/Context/Context";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminProvider from "@/Context/AdminProvider";
 import Sidebar from "./Sidebar";
 
 const Layout = ({ children }) => {
   const { user } = useContext(Context);
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,10 +19,36 @@ const Layout = ({ children }) => {
 
     setIsLoading(false);
 
-    if (!user?.data?.isAdmin) {
+    const canAccessDashboard =
+      user?.data?.isAdmin || user?.data?.role === "admin" || user?.data?.role === "vendor";
+
+    if (!canAccessDashboard) {
       router.replace("/");
+      return;
     }
-  }, [user, router]);
+
+    const isVendor = user?.data?.role === "vendor";
+    const vendorVendorId = user?.data?.vendorId?._id || user?.data?.vendorId;
+
+    if (isVendor) {
+      const vendorHome =
+        vendorVendorId && pathname === "/dashboard/vendors"
+          ? `/dashboard/vendors/${vendorVendorId}`
+          : "/dashboard";
+      const isRestrictedVendorPage =
+        pathname === "/dashboard/users" ||
+        pathname === "/dashboard/categories" ||
+        pathname === "/dashboard/vendors" ||
+        (pathname.startsWith("/dashboard/vendors/") &&
+          vendorVendorId &&
+          !pathname.startsWith(`/dashboard/vendors/${vendorVendorId}`));
+
+      if (isRestrictedVendorPage) {
+        router.replace(vendorHome);
+        return;
+      }
+    }
+  }, [user, router, pathname]);
 
   if (isLoading) {
     return (
@@ -31,7 +58,10 @@ const Layout = ({ children }) => {
     );
   }
 
-  if (!user?.data?.isAdmin) {
+  const canAccessDashboard =
+    user?.data?.isAdmin || user?.data?.role === "admin" || user?.data?.role === "vendor";
+
+  if (!canAccessDashboard) {
     return null;
   }
 

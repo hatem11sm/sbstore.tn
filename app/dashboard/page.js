@@ -50,8 +50,16 @@ const statCards = [
 ];
 
 const Dashboard = () => {
-  const { totalUser, totalProduct, totalOrders, isLoading, error } =
-    useContext(AdminContext);
+  const {
+    totalUser,
+    totalProduct,
+    totalOrders,
+    totalVendors,
+    isLoading,
+    error,
+    isAdminView,
+    scopedVendor,
+  } = useContext(AdminContext);
 
   const totalRevenue = useMemo(() => {
     if (!Array.isArray(totalOrders)) return 0;
@@ -73,16 +81,38 @@ const Dashboard = () => {
       .slice(0, 5);
   }, [totalOrders]);
 
+  const topVendors = useMemo(() => {
+    const summary = (totalOrders || []).reduce((accumulator, order) => {
+      (order.vendorBreakdown || []).forEach((entry) => {
+        const key = entry.vendorSlug || "sb-store";
+        if (!accumulator[key]) {
+          accumulator[key] = {
+            name: entry.vendorName || "SB Store",
+            revenue: 0,
+            items: 0,
+          };
+        }
+        accumulator[key].revenue += Number(entry.subtotal || 0);
+        accumulator[key].items += Number(entry.itemCount || 0);
+      });
+      return accumulator;
+    }, {});
+
+    return Object.values(summary)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 4);
+  }, [totalOrders]);
+
   const chartData = {
-    labels: ["Users", "Products", "Orders"],
+    labels: isAdminView
+      ? ["Clients", "Produits", "Commandes"]
+      : ["Produits", "Commandes", "CA"],
     datasets: [
       {
-        label: "Totals",
-        data: [
-          totalUser?.length || 0,
-          totalProduct?.length || 0,
-          totalOrders?.length || 0,
-        ],
+        label: "Totaux",
+        data: isAdminView
+          ? [totalUser?.length || 0, totalProduct?.length || 0, totalOrders?.length || 0]
+          : [totalProduct?.length || 0, totalOrders?.length || 0, Math.round(totalRevenue)],
         backgroundColor: [
           "rgba(56, 189, 248, 0.35)",
           "rgba(34, 197, 94, 0.35)",
@@ -110,7 +140,10 @@ const Dashboard = () => {
   return (
     <section className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {statCards.map((card) => {
+        {(isAdminView
+          ? statCards
+          : statCards.filter((card) => card.key !== "users")
+        ).map((card) => {
           const Icon = card.icon;
           const value =
             card.key === "users"
@@ -146,7 +179,7 @@ const Dashboard = () => {
       <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
           <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-            Store growth
+            {isAdminView ? "Marketplace pulse" : "Performance boutique"}
           </h2>
           <div className="mt-6 h-72">
             <Bar data={chartData} options={chartOptions} />
@@ -155,40 +188,96 @@ const Dashboard = () => {
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
           <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-            Quick insights
+            Vue rapide
           </h2>
           <ul className="mt-4 space-y-4 text-sm text-slate-700">
             <li className="rounded-2xl bg-slate-50 px-4 py-3">
-              {totalOrders?.length ?? 0} orders captured in total.
+              {totalOrders?.length ?? 0} commande(s) suivie(s).
             </li>
             <li className="rounded-2xl bg-slate-50 px-4 py-3">
-              {totalProduct?.length ?? 0} products currently visible to shoppers.
+              {totalProduct?.length ?? 0} produit(s) visible(s) pour les clients.
             </li>
+            {isAdminView ? (
+              <>
+                <li className="rounded-2xl bg-slate-50 px-4 py-3">
+                  {totalUser?.length ?? 0} compte(s) enregistrés.
+                </li>
+                <li className="rounded-2xl bg-slate-50 px-4 py-3">
+                  {totalVendors?.length ?? 0} boutique(s) présentes sur la plateforme.
+                </li>
+              </>
+            ) : (
+              <li className="rounded-2xl bg-slate-50 px-4 py-3">
+                Boutique active: {scopedVendor?.name || "Ma boutique"}.
+              </li>
+            )}
             <li className="rounded-2xl bg-slate-50 px-4 py-3">
-              {totalUser?.length ?? 0} registered customers to nurture.
-            </li>
-            <li className="rounded-2xl bg-slate-50 px-4 py-3">
-              {totalRevenue.toFixed(2)} Dt in lifetime revenue tracked here.
+              {totalRevenue.toFixed(2)} Dt de chiffre d&apos;affaires suivi.
             </li>
           </ul>
         </div>
       </div>
 
+      {isAdminView && (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+                Top boutiques
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Les boutiques qui génèrent le plus de chiffre d&apos;affaires.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/vendors"
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Gérer les boutiques
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {topVendors.length ? (
+              topVendors.map((vendor) => (
+                <div
+                  key={vendor.name}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <p className="text-sm font-semibold text-slate-900">
+                    {vendor.name}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">
+                    {vendor.revenue.toFixed(2)} Dt
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {vendor.items} article(s) vendus
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">
+                Aucune boutique n&apos;a encore généré de ventes.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Recent orders
+              {isAdminView ? "Commandes récentes" : "Mes commandes récentes"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Peek at the latest activity and jump in when needed.
+              Un aperçu rapide de l&apos;activité la plus récente.
             </p>
           </div>
           <Link
             href="/dashboard/orders"
             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            View all orders
+            Voir toutes les commandes
           </Link>
         </div>
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
@@ -209,7 +298,7 @@ const Dashboard = () => {
                     colSpan={5}
                     className="py-8 text-center text-sm text-slate-400"
                   >
-                    No orders yet. Your next sale is around the corner 🚀
+                    Aucune commande pour le moment.
                   </td>
                 </tr>
               ) : (

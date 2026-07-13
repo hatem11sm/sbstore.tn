@@ -1,20 +1,18 @@
 import connectDB from "@/db/Database";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
+import { getAuthUser } from "@/utils/serverAuth";
+
+export const dynamic = "force-dynamic";
+
 export const GET = async (req) => {
   await connectDB();
-  const cookieStore = await cookies();
-  const authToken = cookieStore.get("authToken")?.value || "";
   try {
-    const detail = jwt.verify(authToken, process.env.JWT_SECRET);
-    const id = detail.id;
-    const user = await User.findById(id).select("-password");
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({
         status: 401,
-        error: "User not found",
+        error: "Utilisateur introuvable",
       });
     } else {
       return NextResponse.json({
@@ -25,7 +23,7 @@ export const GET = async (req) => {
   } catch (error) {
     return NextResponse.json({
       status: 401,
-      error: "Invalid token",
+      error: "Token invalide",
     });
   }
 };

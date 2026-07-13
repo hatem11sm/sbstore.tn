@@ -15,6 +15,15 @@ const statusSteps = [
   { key: "delivered", label: "Delivered" },
 ];
 
+const paymentStatusOptions = ["pending", "awaiting_payment", "paid", "failed", "refunded"];
+const paymentStatusLabels = {
+  pending: "Paiement à la livraison",
+  awaiting_payment: "En attente de paiement",
+  paid: "Payé",
+  failed: "Échoué",
+  refunded: "Remboursé",
+};
+
 const statusStyles = {
   pending: "bg-amber-500/10 text-amber-600 ring-1 ring-inset ring-amber-500/30",
   processing:
@@ -81,6 +90,33 @@ const OrderDetails = ({ params }) => {
     }
   };
 
+  const handlePaymentStatusChange = async (paymentStatus) => {
+    if (!order || isUpdating) return;
+    try {
+      setIsUpdating(true);
+      const response = await axios.put(`/api/order/${order._id}`, {
+        paymentStatus,
+      });
+      if (response.data.status === 200) {
+        const updatedOrder = { ...order, paymentStatus };
+        setOrder(updatedOrder);
+        if (Array.isArray(totalOrders)) {
+          setTotalOrders(
+            totalOrders.map((item) =>
+              item._id === updatedOrder._id ? updatedOrder : item
+            )
+          );
+        }
+        toast.success("Payment status updated");
+      }
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast.error("Failed to update payment status");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const currentStepIndex = useMemo(() => {
     if (!order) return -1;
     const index = statusSteps.findIndex((step) => step.key === order.status);
@@ -116,7 +152,7 @@ const OrderDetails = ({ params }) => {
             Orders
           </Link>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-            Order #{order._id.slice(-6).toUpperCase()}
+            {order.orderNumber || `Order #${order._id.slice(-6).toUpperCase()}`}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             Placed {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })} ·{" "}
@@ -182,11 +218,25 @@ const OrderDetails = ({ params }) => {
                   Payment
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-slate-900 capitalize">
-                  {order.paymentStatus ?? "Unspecified"}
+                  {paymentStatusLabels[order.paymentStatus] ?? "Non défini"}
                 </p>
                 <p className="text-xs text-slate-500">
-                  Status auto-updates with fulfillment changes
+                  {order.paymentMethod === "online"
+                    ? "Paiement en ligne"
+                    : "Paiement à la livraison"}
                 </p>
+                <select
+                  value={order.paymentStatus || "pending"}
+                  disabled={isUpdating}
+                  onChange={(event) => handlePaymentStatusChange(event.target.value)}
+                  className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                >
+                  {paymentStatusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {paymentStatusLabels[option]}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -282,10 +332,61 @@ const OrderDetails = ({ params }) => {
               })}
             </div>
             <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
-              <span className="text-sm text-slate-500">Order total</span>
-              <span className="text-2xl font-semibold text-slate-900">
-                {orderTotalValue.toFixed(2)} Dt
-              </span>
+              <div className="text-right">
+                <p className="text-sm text-slate-500">
+                  Sous-total {Number(order.subtotal || 0).toFixed(2)} Dt
+                </p>
+                <p className="text-sm text-slate-500">
+                  Livraison {Number(order.shippingFee || 0).toFixed(2)} Dt
+                </p>
+                <p className="text-sm text-slate-500">
+                  Remise -{Number(order.discount || 0).toFixed(2)} Dt
+                </p>
+                <span className="text-2xl font-semibold text-slate-900">
+                  {orderTotalValue.toFixed(2)} Dt
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Répartition boutiques
+            </h2>
+            <div className="mt-4 space-y-4">
+              {(order.vendorBreakdown?.length
+                ? order.vendorBreakdown
+                : [
+                    {
+                      vendorName: "SB Store",
+                      itemCount:
+                        order.items?.reduce(
+                          (total, item) => total + Number(item.quantity || 0),
+                          0
+                        ) || 0,
+                      subtotal: orderTotalValue,
+                    },
+                  ]
+              ).map((vendor) => (
+                <div
+                  key={`${vendor.vendorSlug || vendor.vendorName}`}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {vendor.vendorName}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {vendor.itemCount} article(s)
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {Number(vendor.subtotal || 0).toFixed(2)} Dt
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -319,6 +420,16 @@ const OrderDetails = ({ params }) => {
                   </p>
                   <p className="mt-1 font-medium text-slate-900">
                     {order.customer.email}
+                  </p>
+                </div>
+              )}
+              {order.promo?.code && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                    Promo
+                  </p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {order.promo.code} · -{Number(order.discount || 0).toFixed(2)} Dt
                   </p>
                 </div>
               )}

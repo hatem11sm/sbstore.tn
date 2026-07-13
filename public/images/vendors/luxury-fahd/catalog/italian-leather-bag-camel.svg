@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Sac cuir italien camel</title>
+  <desc id="desc">Visuel produit seul d'un sac bandouliere camel style luxe italien.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111"/>
+      <stop offset="0.55" stop-color="#f7f1e7"/>
+      <stop offset="1" stop-color="#24201b"/>
+    </linearGradient>
+    <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e5a15f"/>
+      <stop offset="0.5" stop-color="#9b5a2e"/>
+      <stop offset="1" stop-color="#5d321d"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf2ce"/>
+      <stop offset="0.45" stop-color="#c8a758"/>
+      <stop offset="1" stop-color="#6e5421"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="38" stdDeviation="36" flood-color="#000" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <rect x="90" y="94" width="720" height="1012" fill="none" stroke="#d8b66a" stroke-opacity=".34"/>
+  <g filter="url(#shadow)">
+    <path d="M305 325c0-93 69-160 145-160s145 67 145 160" fill="none" stroke="#61341f" stroke-width="30" stroke-linecap="round"/>
+    <rect x="236" y="306" width="428" height="618" rx="34" fill="url(#leather)"/>
+    <path d="M236 405h428v103c-118 42-304 42-428 0z" fill="#3b2016" opacity=".34"/>
+    <path d="M285 354h330v112H285z" fill="#7f4829" opacity=".8"/>
+    <rect x="378" y="386" width="144" height="74" rx="12" fill="url(#metal)"/>
+    <rect x="417" y="407" width="66" height="26" rx="4" fill="#4b3617" opacity=".7"/>
+    <path d="M284 562h332" stroke="#f6c783" stroke-opacity=".34" stroke-width="4"/>
+    <path d="M284 630h332" stroke="#4b291b" stroke-opacity=".28" stroke-width="3"/>
+    <path d="M284 698h332" stroke="#f6c783" stroke-opacity=".22" stroke-width="3"/>
+  </g>
+  <text x="450" y="1032" text-anchor="middle" fill="#d8b66a" font-family="Georgia, serif" font-size="44" font-style="italic">Luxury Fahd</text>
+</svg>

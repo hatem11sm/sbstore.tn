@@ -4,6 +4,7 @@ import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import withCloudinaryProxy from "@/utils/cloudinaryProxy";
 
 const Category = ({ slug, collectionGroup }) => {
   const [data, setData] = useState([]);
@@ -180,7 +181,7 @@ const Category = ({ slug, collectionGroup }) => {
 
   if (loading) {
     return (
-      <div className="w-full lg:w-11/12 mx-auto my-4">
+      <div className="mx-auto my-10 w-full max-w-screen-2xl px-4 sm:px-6 lg:px-10">
         <CardSkeleton />
       </div>
     );
@@ -188,14 +189,24 @@ const Category = ({ slug, collectionGroup }) => {
 
   if (!data.length) {
     return (
-      <div className="w-full lg:w-11/12 mx-auto my-4">
-        <div className="bg-white p-8 rounded-md text-center">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-            No products found
-          </h2>
-          <p className="text-gray-500">
-            Please check back later or explore other categories.
+      <div className="bg-white">
+        <div className="mx-auto flex min-h-[62vh] w-full max-w-screen-2xl flex-col items-center justify-center px-4 py-20 text-center sm:px-6 lg:px-10">
+          <p className="mb-5 text-xs font-medium uppercase tracking-[0.35em] text-black/40">
+            {normalizedGroup || "collection"}
           </p>
+          <h1 className="text-5xl font-semibold uppercase leading-none text-black sm:text-7xl">
+            {categoryInfo?.name || slug}
+          </h1>
+          <p className="mt-6 max-w-md text-sm leading-6 text-black/55">
+            This edit is not available yet. Explore the full store while new
+            pieces are being added.
+          </p>
+          <Link
+            href="/products"
+            className="mt-8 inline-flex border border-black bg-black px-8 py-3 text-xs font-medium uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
+          >
+            View all products
+          </Link>
         </div>
       </div>
     );
@@ -203,51 +214,52 @@ const Category = ({ slug, collectionGroup }) => {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center w-full h-96 bg-cover bg-center bg-no-repeat">
+      <div className="relative flex h-[62vh] min-h-[460px] w-full flex-col items-center justify-center bg-black bg-cover bg-center bg-no-repeat">
         <div
-          className="flex flex-col items-center justify-center w-full h-full bg-no-repeat bg-cover bg-hero-pattern"
+          className="flex h-full w-full flex-col items-center justify-center bg-no-repeat bg-cover bg-center text-center"
           style={
             categoryInfo?.image
               ? {
-                  backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.7)), url(${categoryInfo.image})`,
+                  backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.48)), url(${categoryInfo.image})`,
                 }
               : undefined
           }
         >
-          <h1 className="text-4xl font-bold text-white capitalize">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-white/75">
+            {normalizedGroup || "collection"}
+          </p>
+          <h1 className="text-6xl font-semibold uppercase leading-none text-white sm:text-8xl">
             {categoryInfo?.name || slug}
           </h1>
-          <p className="text-xl font-medium text-white">
-            For unique and stylish clothing in the collection you can select the
-            best one for you.
+          <p className="mt-5 max-w-xl px-4 text-sm leading-6 text-white/80">
+            A focused edit of essential silhouettes and everyday pieces.
           </p>
         </div>
       </div>
       <div
-        className="mx-auto w-11/12 px-2 py-8 sm:px-6 sm:py-12 lg:px-8 text-gray-500 text-sm"
-        style={{ maxWidth: "90rem" }}
+        className="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-6 text-xs uppercase tracking-[0.18em] text-black/45 sm:px-6 lg:px-10"
       >
-        Home <span className="mx-2">/</span>{" "}
+        Home <span>/</span>{" "}
         {categoryInfo?.name || slug}
       </div>
 
-      <div className="mx-auto w-11/12 px-2 py-8 sm:px-6 sm:py-12 lg:px-8 flex flex-col gap-10 lg:flex-row" style={{ maxWidth: "90rem" }}>
-        <aside className="w-full rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm lg:w-72">
+      <div className="mx-auto flex max-w-screen-2xl flex-col gap-10 px-4 pb-16 sm:px-6 lg:flex-row lg:px-10">
+        <aside className="w-full border-t border-black/10 pt-5 lg:w-72">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-600">
+            <h3 className="text-xs font-medium uppercase tracking-[0.28em] text-black">
               Filter
             </h3>
             <button
               onClick={handleResetFilters}
-              className="text-xs uppercase tracking-[0.3em] text-gray-400 hover:text-gray-700"
+              className="text-xs uppercase tracking-[0.22em] text-black/40 hover:text-black"
             >
               Reset
             </button>
           </div>
 
-          <div className="mt-6 space-y-6 text-gray-600">
+          <div className="mt-8 space-y-8 text-black/70">
             <div>
-              <label className="text-xs uppercase tracking-[0.3em] text-gray-400">
+              <label className="text-xs uppercase tracking-[0.24em] text-black/40">
                 Search
               </label>
               <input
@@ -255,16 +267,16 @@ const Category = ({ slug, collectionGroup }) => {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Look for a piece"
-                className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                className="mt-3 w-full border-0 border-b border-black/15 px-0 py-3 text-sm outline-none focus:border-black focus:ring-0"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-                  Price (DT)
+                  Price
                 </p>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-black/45">
                   {priceBounds[0]} - {priceBounds[1] || priceBounds[0]}
                 </span>
               </div>
@@ -275,23 +287,23 @@ const Category = ({ slug, collectionGroup }) => {
                   max={priceBounds[1] || undefined}
                   value={priceFilter[0]}
                   onChange={(event) => handlePriceChange("min", event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                  className="w-full border border-black/10 px-3 py-2 text-sm outline-none focus:border-black"
                 />
-                <span className="text-gray-400">-</span>
+                <span className="text-black/30">-</span>
                 <input
                   type="number"
                   min={priceBounds[0]}
                   max={priceBounds[1] || undefined}
                   value={priceFilter[1]}
                   onChange={(event) => handlePriceChange("max", event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                  className="w-full border border-black/10 px-3 py-2 text-sm outline-none focus:border-black"
                 />
               </div>
             </div>
 
             {availableSizes.length > 0 && (
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+                <p className="text-xs uppercase tracking-[0.24em] text-black/40">
                   Sizes
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -301,10 +313,10 @@ const Category = ({ slug, collectionGroup }) => {
                       <button
                         key={size}
                         onClick={() => handleSizeToggle(size)}
-                        className={`rounded-xl border px-3 py-2 text-xs uppercase tracking-[0.2em] transition ${
+                        className={`border px-3 py-2 text-xs uppercase tracking-[0.16em] transition ${
                           active
-                            ? "border-gray-900 bg-gray-900 text-white"
-                            : "border-gray-200 text-gray-600 hover:border-gray-400"
+                            ? "border-black bg-black text-white"
+                            : "border-black/10 text-black/60 hover:border-black"
                         }`}
                       >
                         {size}
@@ -317,16 +329,16 @@ const Category = ({ slug, collectionGroup }) => {
 
             {subcategories.length > 0 && (
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+                <p className="text-xs uppercase tracking-[0.24em] text-black/40">
                   Subcategories
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-col gap-2">
                   <button
                     onClick={() => setSelectedSubcategory("")}
-                    className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] ${
+                    className={`border px-4 py-2 text-left text-xs uppercase tracking-[0.16em] ${
                       selectedSubcategory === ""
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                        ? "border-black bg-black text-white"
+                        : "border-black/10 text-black/65 hover:border-black"
                     }`}
                   >
                     All
@@ -335,10 +347,10 @@ const Category = ({ slug, collectionGroup }) => {
                     <button
                       key={subcategory}
                       onClick={() => setSelectedSubcategory(subcategory)}
-                      className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] ${
+                      className={`border px-4 py-2 text-left text-xs uppercase tracking-[0.16em] ${
                         selectedSubcategory === subcategory
-                          ? "bg-gray-900 text-white"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                          ? "border-black bg-black text-white"
+                          : "border-black/10 text-black/65 hover:border-black"
                       }`}
                     >
                       {subcategory}
@@ -351,18 +363,18 @@ const Category = ({ slug, collectionGroup }) => {
         </aside>
 
         <section className="flex-1">
-          <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-gray-500">
-              {filteredProducts.length} pieces curated
+          <div className="flex flex-col gap-4 border-y border-black/10 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs uppercase tracking-[0.18em] text-black/50">
+              {filteredProducts.length} pieces
             </p>
             <div className="flex items-center gap-3">
-              <label className="text-xs uppercase tracking-[0.3em] text-gray-400">
+              <label className="text-xs uppercase tracking-[0.22em] text-black/40">
                 Sort
               </label>
               <select
                 value={sortOption}
                 onChange={(event) => setSortOption(event.target.value)}
-                className="rounded-full border border-gray-200 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                className="border border-black/10 px-4 py-2 text-sm outline-none focus:border-black"
               >
                 <option value="featured">Featured</option>
                 <option value="priceAsc">Price: Low to High</option>
@@ -373,40 +385,40 @@ const Category = ({ slug, collectionGroup }) => {
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="mt-10 rounded-3xl border border-dashed border-gray-200 p-10 text-center">
-              <p className="text-lg font-semibold text-gray-800">
+            <div className="mt-10 border border-dashed border-black/15 p-10 text-center">
+              <p className="text-lg font-semibold uppercase tracking-[0.12em] text-black">
                 No pieces match your filters
               </p>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-black/50">
                 Try adjusting the size, price, or keyword filters.
               </p>
             </div>
           ) : (
-            <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+            <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map((product) => (
             <Link
               href={`/products/${product?._id}`}
               key={product?._id}
               className="group"
             >
-              <div className="aspect-h-1 aspect-w-1 w-full md:h-5/6 overflow-hidden rounded-lg bg-gray-200 xl:aspect-h-8 xl:aspect-w-7">
+              <div className="aspect-[3/4] w-full overflow-hidden bg-neutral-100">
                 <Image
-                  width={500}
-                  height={400}
+                  width={700}
+                  height={900}
                   src={
-                    product?.mainImage ||
+                    withCloudinaryProxy(product?.mainImage) ||
                     "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80"
                   }
                   alt={product?.name}
-                  className="h-full w-full object-cover object-center group-hover:opacity-75"
+                  className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
                 />
               </div>
-              <h3 className="mt-4 text-sm text-gray-700">{product?.name}</h3>
-              <p className="mt-1 text-lg font-medium text-gray-900">
-                {product?.price} Dt
+              <h3 className="mt-3 text-xs font-medium uppercase tracking-[0.08em] text-black">{product?.name}</h3>
+              <p className="mt-1 text-sm text-black">
+                {product?.hidePrice ? "Prix sur demande" : `${product?.price} Dt`}
               </p>
               {product?.subcategory && (
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-xs uppercase tracking-[0.12em] text-black/40">
                   {product.subcategory}
                 </p>
               )}

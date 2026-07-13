@@ -37,9 +37,9 @@ const ContextProvider = ({ children }) => {
         setError(response.data.status !== 201);
         setMessage(response.data.message);
 
-        if (response.data.message === "User created successfully") {
+        if (response.data.status === 201) {
           router.push("/loginpage");
-          toast.success("User created successfully");
+          toast.success("Compte créé avec succès");
           setSignUp({
             name: "",
             email: "",
@@ -65,12 +65,12 @@ const ContextProvider = ({ children }) => {
       setError(response.data.status !== 201);
       setMessage(response.data.message);
 
-      if (response.data.message === "User login successfully") {
+      if (response.data.status === 201) {
         // Fetch user data after successful login
         const userResponse = await axios.get("/api/login-user");
         setUser(userResponse.data);
         router.push("/");
-        toast.success("User login successfully");
+        toast.success("Connexion réussie");
         setLogin({
           email: "",
           password: "",

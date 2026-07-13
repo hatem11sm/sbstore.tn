@@ -15,6 +15,7 @@ const shouldBypassProxy = (src) => {
     src.startsWith("/") ||
     src.startsWith("data:") ||
     src.startsWith("blob:") ||
+    src.startsWith("https://images.unsplash.com/") ||
     src.startsWith(CLOUDINARY_FETCH_BASE)
   );
 };
@@ -27,4 +28,3 @@ export const withCloudinaryProxy = (src = "") => {
 };
 
 export default withCloudinaryProxy;
-

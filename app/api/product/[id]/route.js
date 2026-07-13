@@ -1,14 +1,24 @@
 import connectDB from "@/db/Database";
 import Category from "@/models/Category";
 import ClothingProduct from "@/models/Product";
+import Vendor from "@/models/Vendor";
 import slugify from "@/utils/slugify";
 import { normalizeCollectionGroup, buildCategoryKey } from "@/utils/categoryPaths";
 import { NextResponse } from "next/server";
+import {
+  isAdminUser,
+  isVendorUser,
+  requireAuthUser,
+  userOwnsVendor,
+} from "@/utils/serverAuth";
 
 export const GET = async (req, { params }) => {
   await connectDB();
   const { id } = params;
-  const product = await ClothingProduct.findById(id);
+  const product = await ClothingProduct.findById(id).populate(
+    "vendorId",
+    "name slug city status"
+  );
   if (!product)
     return NextResponse.json({ status: 404, message: "Product not found" });
   return NextResponse.json({
@@ -21,14 +31,32 @@ export const GET = async (req, { params }) => {
 export const PUT = async (req, { params }) => {
   await connectDB();
   const { id } = params;
+  const { user, error: authError } = await requireAuthUser();
+
+  if (authError) {
+    return NextResponse.json(
+      { status: authError.status, message: authError.message },
+      { status: authError.status }
+    );
+  }
+
+  if (!isAdminUser(user) && !isVendorUser(user)) {
+    return NextResponse.json(
+      { status: 403, message: "Accès non autorisé" },
+      { status: 403 }
+    );
+  }
+
   const {
     name,
     price,
+    hidePrice = false,
     description,
     category,
     categorySlug,
     categoryCollectionGroup,
     subcategory = "",
+    vendorId = "",
     mainImage,
   } = await req.json();
 
@@ -84,6 +112,42 @@ export const PUT = async (req, { params }) => {
   }
 
   const normalizedSubcategory = subcategory?.trim() || "";
+  let matchedVendor = null;
+  const existingProduct = await ClothingProduct.findById(id);
+
+  if (!existingProduct) {
+    return NextResponse.json({ status: 404, message: "Product not found" });
+  }
+
+  if (
+    isVendorUser(user) &&
+    !userOwnsVendor(user, existingProduct.vendorId)
+  ) {
+    return NextResponse.json(
+      {
+        status: 403,
+        message: "Ce produit n’appartient pas à votre boutique",
+      },
+      { status: 403 }
+    );
+  }
+
+  if (vendorId) {
+    matchedVendor = await Vendor.findById(vendorId);
+    if (!matchedVendor) {
+      return NextResponse.json(
+        {
+          status: 400,
+          message: "La boutique sélectionnée n’existe pas",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (isVendorUser(user)) {
+    matchedVendor = await Vendor.findById(user.vendorId._id);
+  }
 
   if (
     normalizedSubcategory &&
@@ -104,11 +168,15 @@ export const PUT = async (req, { params }) => {
     {
       name: String(name).trim(),
       price: Number(price),
+      hidePrice: Boolean(hidePrice),
       description: String(description).trim(),
       category: matchedCategory.name,
       categorySlug: matchedCategory.slug,
       categoryId: matchedCategory._id,
       categoryCollectionGroup: matchedCategory.collectionGroup,
+      vendorId: matchedVendor?._id,
+      vendorName: matchedVendor?.name || "SB Store",
+      vendorSlug: matchedVendor?.slug || "sb-store",
       subcategory: normalizedSubcategory,
       mainImage: String(mainImage).trim(),
     },
@@ -129,9 +197,41 @@ export const PUT = async (req, { params }) => {
 export const DELETE = async (req, { params }) => {
   await connectDB();
   const { id } = params;
-  const product = await ClothingProduct.findByIdAndDelete(id);
-  if (!product)
+  const { user, error: authError } = await requireAuthUser();
+
+  if (authError) {
+    return NextResponse.json(
+      { status: authError.status, message: authError.message },
+      { status: authError.status }
+    );
+  }
+
+  if (!isAdminUser(user) && !isVendorUser(user)) {
+    return NextResponse.json(
+      { status: 403, message: "Accès non autorisé" },
+      { status: 403 }
+    );
+  }
+
+  const existingProduct = await ClothingProduct.findById(id);
+  if (!existingProduct) {
     return NextResponse.json({ status: 404, message: "Product not found" });
+  }
+
+  if (
+    isVendorUser(user) &&
+    !userOwnsVendor(user, existingProduct.vendorId)
+  ) {
+    return NextResponse.json(
+      {
+        status: 403,
+        message: "Ce produit n’appartient pas à votre boutique",
+      },
+      { status: 403 }
+    );
+  }
+
+  const product = await ClothingProduct.findByIdAndDelete(id);
   return NextResponse.json({
     status: 200,
     message: "Product deleted successfully",

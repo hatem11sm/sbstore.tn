@@ -22,6 +22,24 @@ const statusStyles = {
 };
 
 const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"];
+const paymentStatusLabels = {
+  pending: "COD",
+  awaiting_payment: "En attente",
+  paid: "Payé",
+  failed: "Échec",
+  refunded: "Remboursé",
+};
+const paymentStatusOptions = [
+  "pending",
+  "awaiting_payment",
+  "paid",
+  "failed",
+  "refunded",
+];
+const paymentMethodLabels = {
+  cash_on_delivery: "À la livraison",
+  online: "En ligne",
+};
 
 const Orders = () => {
   const { totalOrders, setTotalOrders, isLoading: adminLoading, error } =
@@ -30,11 +48,14 @@ const Orders = () => {
   const [itemsPerPage] = useState(8);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
+  const [promoFilter, setPromoFilter] = useState("all");
   const [updatingOrder, setUpdatingOrder] = useState("");
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, paymentStatusFilter, paymentMethodFilter, promoFilter]);
 
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(totalOrders)) return [];
@@ -42,22 +63,58 @@ const Orders = () => {
     return totalOrders.filter((order) => {
       const matchesStatus =
         statusFilter === "all" ? true : order.status === statusFilter;
+      const matchesPaymentStatus =
+        paymentStatusFilter === "all"
+          ? true
+          : (order.paymentStatus || "pending") === paymentStatusFilter;
+      const matchesPaymentMethod =
+        paymentMethodFilter === "all"
+          ? true
+          : (order.paymentMethod || "cash_on_delivery") === paymentMethodFilter;
+      const matchesPromo =
+        promoFilter === "all"
+          ? true
+          : promoFilter === "with_promo"
+          ? Boolean(order.promo?.code)
+          : !order.promo?.code;
       const term = searchTerm.trim().toLowerCase();
 
-      if (!term) return matchesStatus;
+      if (!term) {
+        return (
+          matchesStatus &&
+          matchesPaymentStatus &&
+          matchesPaymentMethod &&
+          matchesPromo
+        );
+      }
 
       const haystack = [
         order._id,
+        order.orderNumber,
         order.customer?.fullName,
         order.customer?.phoneNumber,
+        order.promo?.code,
         order.items?.map((item) => item.name).join(" "),
       ]
         .join(" ")
         .toLowerCase();
 
-      return matchesStatus && haystack.includes(term);
+      return (
+        matchesStatus &&
+        matchesPaymentStatus &&
+        matchesPaymentMethod &&
+        matchesPromo &&
+        haystack.includes(term)
+      );
     });
-  }, [totalOrders, searchTerm, statusFilter]);
+  }, [
+    totalOrders,
+    searchTerm,
+    statusFilter,
+    paymentStatusFilter,
+    paymentMethodFilter,
+    promoFilter,
+  ]);
 
   const totalPages = Math.max(
     1,
@@ -78,6 +135,18 @@ const Orders = () => {
       acc[order.status] = (acc[order.status] || 0) + 1;
       return acc;
     }, {});
+  }, [filteredOrders]);
+
+  const commerceSummary = useMemo(() => {
+    return filteredOrders.reduce(
+      (acc, order) => {
+        if (order.paymentMethod === "online") acc.online += 1;
+        else acc.cod += 1;
+        if (order.promo?.code) acc.withPromo += 1;
+        return acc;
+      },
+      { online: 0, cod: 0, withPromo: 0 }
+    );
   }, [filteredOrders]);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
@@ -161,11 +230,70 @@ const Orders = () => {
                 ))}
               </select>
             </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="paymentStatusFilter" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Paiement
+              </label>
+              <select
+                id="paymentStatusFilter"
+                value={paymentStatusFilter}
+                onChange={(event) => setPaymentStatusFilter(event.target.value)}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="all">Tous</option>
+                {paymentStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {paymentStatusLabels[status]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="paymentMethodFilter" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Mode
+              </label>
+              <select
+                id="paymentMethodFilter"
+                value={paymentMethodFilter}
+                onChange={(event) => setPaymentMethodFilter(event.target.value)}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="all">Tous</option>
+                <option value="cash_on_delivery">À la livraison</option>
+                <option value="online">En ligne</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="promoFilter" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Promo
+              </label>
+              <select
+                id="promoFilter"
+                value={promoFilter}
+                onChange={(event) => setPromoFilter(event.target.value)}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="all">Tous</option>
+                <option value="with_promo">Avec promo</option>
+                <option value="without_promo">Sans promo</option>
+              </select>
+            </div>
           </div>
           <div className="text-sm text-slate-500">
             Showing <span className="font-semibold text-slate-900">{currentItems.length}</span> of{" "}
             <span className="font-semibold text-slate-900">{filteredOrders.length}</span> matching orders
           </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3 text-xs font-medium text-slate-500">
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            En ligne: <span className="text-slate-900">{commerceSummary.online}</span>
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            Livraison: <span className="text-slate-900">{commerceSummary.cod}</span>
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            Avec promo: <span className="text-slate-900">{commerceSummary.withPromo}</span>
+          </span>
         </div>
       </div>
 
@@ -193,7 +321,7 @@ const Orders = () => {
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
-                    #{order._id.slice(-6).toUpperCase()}
+                    {order.orderNumber || `#${order._id.slice(-6).toUpperCase()}`}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     Placed on {format(new Date(order.createdAt), "MMM d, yyyy")} (
@@ -217,6 +345,18 @@ const Orders = () => {
                   <p className="text-xs font-medium text-emerald-600">
                     {order.items?.length ?? 0} items
                   </p>
+                  <p className="text-xs font-medium text-slate-500">
+                    {order.vendorBreakdown?.length || 1} boutique(s)
+                  </p>
+                  <p className="text-xs font-medium text-slate-500">
+                    {paymentMethodLabels[order.paymentMethod] || "À la livraison"} ·{" "}
+                    {paymentStatusLabels[order.paymentStatus] || "N/A"}
+                  </p>
+                  {order.promo?.code && (
+                    <p className="text-xs font-medium text-indigo-600">
+                      Promo {order.promo.code} · -{Number(order.discount || 0).toFixed(2)} Dt
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span

@@ -1,8 +1,10 @@
 "use client";
 
+import { Context } from "@/Context/Context";
 import { ProductContext } from "@/Context/CreateProduct";
+import { buildVendorAiSuggestions } from "@/utils/vendorAiSuggestions";
 import Image from "next/image";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import {
   buildCategoryKey,
@@ -27,9 +29,41 @@ const Form = () => {
     media,
     uploading,
     categories,
+    vendors,
+    vendorId,
+    setVendorId,
   } = useContext(ProductContext);
+  const { user } = useContext(Context);
+  const isVendorUser = user?.data?.role === "vendor";
+  const scopedVendorId = user?.data?.vendorId?._id || user?.data?.vendorId || "";
+  const availableVendors = isVendorUser
+    ? vendors.filter((vendor) => vendor._id === scopedVendorId)
+    : vendors;
 
   const [availableSubcategories, setAvailableSubcategories] = useState([]);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+
+  const selectedVendorMeta = useMemo(
+    () =>
+      availableVendors.find(
+        (vendor) => String(vendor._id) === String(vendorId || scopedVendorId)
+      ),
+    [availableVendors, scopedVendorId, vendorId]
+  );
+  const selectedCategoryMeta = useMemo(() => {
+    const { slug: selectedSlug, collectionGroup } = parseCategoryKey(category);
+    return categories.find(
+      (item) =>
+        item.slug === selectedSlug &&
+        normalizeCollectionGroup(item.collectionGroup) === collectionGroup
+    );
+  }, [categories, category]);
+
+  useEffect(() => {
+    if (isVendorUser && scopedVendorId && vendorId !== scopedVendorId) {
+      setVendorId(scopedVendorId);
+    }
+  }, [isVendorUser, scopedVendorId, setVendorId, vendorId]);
 
   useEffect(() => {
     const { slug: selectedSlug, collectionGroup } = parseCategoryKey(category);
@@ -70,6 +104,9 @@ const Form = () => {
       case "subcategory":
         setSubcategory(e.target.value);
         break;
+      case "vendorId":
+        setVendorId(e.target.value);
+        break;
       default:
         break;
     }
@@ -92,6 +129,21 @@ const Form = () => {
     fetchProduct(e);
   };
 
+  const generateAiSuggestions = () => {
+    const suggestions = buildVendorAiSuggestions({
+      name,
+      description,
+      categoryLabel: selectedCategoryMeta?.name || "",
+      collectionGroup: selectedCategoryMeta?.collectionGroup || "woman",
+      subcategory,
+      vendorLabel: selectedVendorMeta?.name || "SB Store",
+      city: selectedVendorMeta?.city || "",
+      price,
+    });
+
+    setAiSuggestions(suggestions);
+  };
+
   return (
     <div className="w-full h-full flex items-center justify-center flex-col bg-gray-100 relative">
       <h1 className="w-full text-center my-5">
@@ -99,6 +151,111 @@ const Form = () => {
           Create a new product
         </span>
       </h1>
+      <div className="w-full lg:w-11/12 mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              AI vendeur avancé
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+              Améliore la fiche produit avant publication
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              Génère une meilleure description, un titre plus vendeur, des tags utiles et un score qualité pour convaincre plus vite.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={generateAiSuggestions}
+            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Générer avec l&apos;AI
+          </button>
+        </div>
+
+        {aiSuggestions ? (
+          <div className="mt-6 grid gap-6 xl:grid-cols-[1fr,1fr]">
+            <div className="grid gap-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Titre suggéré
+                </p>
+                <p className="mt-2 text-sm font-semibold text-slate-900">
+                  {aiSuggestions.titleSuggestion}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setName(aiSuggestions.titleSuggestion)}
+                  className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-900"
+                >
+                  Utiliser ce titre
+                </button>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Description suggérée
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {aiSuggestions.descriptionSuggestion}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDescription(aiSuggestions.descriptionSuggestion)}
+                  className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-900"
+                >
+                  Utiliser la description
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Score qualité fiche
+                </p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {aiSuggestions.qualityScore}/100
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Tags suggérés
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {aiSuggestions.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Prix conseillé premium
+                </p>
+                <p className="mt-2 text-sm font-semibold text-slate-900">
+                  {aiSuggestions.recommendedPrice
+                    ? `${aiSuggestions.recommendedPrice} Dt`
+                    : "Ajoute un prix actuel pour recevoir une suggestion"}
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Recommandations
+                </p>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                  {aiSuggestions.recommendations.map((recommendation) => (
+                    <li key={recommendation}>- {recommendation}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
       <form
         onSubmit={handleSubmit}
         className="w-full lg:w-11/12 mx-auto md:grid grid-cols-2 grid-rows-1 gap-3 mt-5 p-4"
@@ -215,6 +372,30 @@ const Form = () => {
         </div>
         <div className="flex flex-col items-center justify-center mt-3">
           <label
+            htmlFor="vendorId"
+            className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
+          >
+            {isVendorUser ? "Votre boutique:" : "Boutique / fournisseur:"}
+          </label>
+          <select
+            name="vendorId"
+            id="vendorId"
+            className="w-full border border-gray-300 p-2 rounded-md mt-2"
+            value={vendorId}
+            onChange={handleChange}
+            disabled={isVendorUser}
+          >
+            {!isVendorUser && <option value="">SB Store (par defaut)</option>}
+            {availableVendors.map((vendor) => (
+              <option key={vendor._id} value={vendor._id}>
+                {vendor.name}
+                {vendor.city ? ` · ${vendor.city}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col items-center justify-center mt-3">
+          <label
             htmlFor="image"
             className="w-full flex items-start justify-start text-gray-700 text-sm md:text-base font-medium"
           >
@@ -276,7 +457,7 @@ const Form = () => {
           {uploading ||
           !name ||
           !category ||
-          !subcategory ||
+          (availableSubcategories.length > 0 && !subcategory) ||
           !media ||
           !description ||
           !price ? (

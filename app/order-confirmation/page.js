@@ -1,20 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
 
 const OrderConfirmation = () => {
-  const router = useRouter();
   const [orderId, setOrderId] = useState(null);
+  const [orderNumber, setOrderNumber] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("cash_on_delivery");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get order ID from URL
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const id = params.get("orderId") || params.get("id");
+    const number = params.get("orderNumber");
+    const method = params.get("paymentMethod") || "cash_on_delivery";
     setOrderId(id);
+    setOrderNumber(number);
+    setPaymentMethod(method);
     setIsLoading(false);
   }, []);
 
@@ -27,9 +29,9 @@ const OrderConfirmation = () => {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
+    <main className="min-h-screen bg-[#f7f4ef] py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white shadow-sm shadow-black/5">
           <div className="px-4 py-5 sm:p-6 text-center">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
               <svg
@@ -49,11 +51,11 @@ const OrderConfirmation = () => {
               </svg>
             </div>
             <h3 className="mt-6 text-xl font-extrabold text-gray-900">
-              Order Placed Successfully!
+              Commande validée avec succès
             </h3>
             <p className="mt-2 text-sm text-gray-500">
-              Thank you for your order. We have received your order and are
-              processing it now.
+              Merci pour votre commande. L’equipe SB Store va verifier les
+              détails et vous contacter pour confirmer la livraison.
             </p>
 
             <div className="mt-5 px-4">
@@ -76,11 +78,24 @@ const OrderConfirmation = () => {
                   </div>
                   <div className="ml-3 flex-1 md:flex md:justify-between">
                     <p className="text-sm text-gray-700">
-                      Your order number is:{" "}
-                      <span className="font-medium text-black">{orderId}</span>
+                      Numéro de commande :{" "}
+                      <span className="font-medium text-black">
+                        {orderNumber || orderId || "en cours"}
+                      </span>
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-4 px-4">
+              <div className="rounded-md bg-[#f7f4ef] p-4 text-sm text-gray-700">
+                Mode de paiement :{" "}
+                <span className="font-medium text-black">
+                  {paymentMethod === "online"
+                    ? "Paiement en ligne"
+                    : "Paiement à la livraison"}
+                </span>
               </div>
             </div>
 
@@ -89,19 +104,19 @@ const OrderConfirmation = () => {
                 href="/"
                 className="w-full sm:w-auto flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#2f4550] hover:bg-[#243741]"
               >
-                Return to Home
+                Retour à l’accueil
               </Link>
               <Link
                 href="/products"
                 className="w-full sm:w-auto flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
-                Continue Shopping
+                Continuer vos achats
               </Link>
             </div>
 
             <div className="mt-10">
               <h4 className="text-sm font-medium text-gray-900">
-                What happens next?
+                Prochaines étapes
               </h4>
               <ul className="mt-2 divide-y divide-gray-200 text-sm text-gray-500 text-left">
                 <li className="py-3 flex items-start">
@@ -113,7 +128,7 @@ const OrderConfirmation = () => {
                   >
                     <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
                   </svg>
-                  You will receive an email confirmation with your order details.
+                  Nous vérifions la disponibilité des articles commandés.
                 </li>
                 <li className="py-3 flex items-start">
                   <svg
@@ -124,7 +139,9 @@ const OrderConfirmation = () => {
                   >
                     <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
                   </svg>
-                  Our team will prepare your order for shipment.
+                  {paymentMethod === "online"
+                    ? "Un email de confirmation vous sera envoyé et le paiement pourra être confirmé dès que la passerelle sera branchée."
+                    : "Notre équipe vous contacte pour confirmer l’adresse, la livraison et le paiement à la réception."}
                 </li>
                 <li className="py-3 flex items-start">
                   <svg
@@ -135,15 +152,14 @@ const OrderConfirmation = () => {
                   >
                     <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
                   </svg>
-                  Once shipped, you will receive shipping details to track your
-                  order.
+                  La commande est préparée après confirmation finale.
                 </li>
               </ul>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

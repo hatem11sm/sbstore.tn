@@ -17,6 +17,8 @@ export const ProductContextProvider = ({ children }) => {
   const [media, setMedia] = useState("");
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [vendorId, setVendorId] = useState("");
   const router = useRouter();
 
   const [products, setProducts] = useState([]);
@@ -78,6 +80,7 @@ export const ProductContextProvider = ({ children }) => {
         description,
         category,
         subcategory,
+        vendorId,
         mainImage: media
       });
 
@@ -96,6 +99,7 @@ export const ProductContextProvider = ({ children }) => {
         categorySlug: selectedSlug,
         categoryCollectionGroup: selectedGroup,
         subcategory: subcategory?.trim() || "",
+        vendorId: vendorId || "",
         mainImage: media,
       });
 
@@ -105,6 +109,7 @@ export const ProductContextProvider = ({ children }) => {
       setDescription("");
       setCategory("");
       setSubcategory("");
+      setVendorId("");
       setFile(null);
       setMedia("");
       toast.success("Product created successfully");
@@ -142,6 +147,21 @@ export const ProductContextProvider = ({ children }) => {
     refreshCategories();
   }, [refreshCategories]);
 
+  const refreshVendors = useCallback(() => {
+    axios
+      .get("/api/vendors")
+      .then((res) => {
+        setVendors(res.data?.data || []);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch vendors:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    refreshVendors();
+  }, [refreshVendors]);
+
   return (
     <ProductContext.Provider
       value={{
@@ -164,6 +184,10 @@ export const ProductContextProvider = ({ children }) => {
         products,
         categories,
         refreshCategories,
+        vendors,
+        refreshVendors,
+        vendorId,
+        setVendorId,
       }}
     >
       {children}

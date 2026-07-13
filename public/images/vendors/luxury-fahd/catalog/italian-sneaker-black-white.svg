@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Sneaker noire blanche luxe italien</title>
+  <desc id="desc">Visuel produit seul d'une sneaker noire avec semelle blanche graphique.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset=".55" stop-color="#f4efe7"/>
+      <stop offset="1" stop-color="#111"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="32" stdDeviation="34" flood-color="#000" flood-opacity=".46"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <rect x="92" y="92" width="716" height="1016" fill="none" stroke="#d8b66a" stroke-opacity=".3"/>
+  <g filter="url(#shadow)" transform="translate(85 385)">
+    <path d="M88 356c110-12 178-62 238-135 40-48 90-76 165-66l118 16c75 10 125 59 146 130l11 38c15 54-24 107-81 109H134c-41 0-70-39-46-92z" fill="#101010"/>
+    <path d="M268 224c49-55 101-85 179-72l118 20c44 8 81 31 108 66-119 22-261 18-405-14z" fill="#1e1e1e"/>
+    <path d="M165 383h520c45 0 76-33 76-73 18 27 23 59 10 90-15 37-51 61-91 61H129c-43 0-71-40-51-79 24 4 53 4 87 1z" fill="#f7f2e9"/>
+    <path d="M579 350l78-92 35 27-76 91zM505 351l73-107 36 22-70 109zM429 353l67-118 37 19-65 119z" fill="#111"/>
+    <path d="M278 263c77 17 153 21 228 13" stroke="#f2f2f2" stroke-width="18" stroke-linecap="round" stroke-dasharray="34 28"/>
+    <path d="M330 189c52 42 101 72 154 90" stroke="#ffffff" stroke-width="12" stroke-linecap="round" opacity=".85"/>
+  </g>
+  <text x="450" y="1035" text-anchor="middle" fill="#d8b66a" font-family="Georgia, serif" font-size="42" font-style="italic">Italian Edition</text>
+</svg>

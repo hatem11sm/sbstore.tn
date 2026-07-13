@@ -35,6 +35,18 @@ const cartSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+      vendorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Vendor",
+      },
+      vendorName: {
+        type: String,
+        default: "SB Store",
+      },
+      vendorSlug: {
+        type: String,
+        default: "sb-store",
+      },
     },
   ],
 });

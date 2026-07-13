@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Sneaker noire orange luxe italien</title>
+  <desc id="desc">Visuel produit seul d'une sneaker noire avec semelle orange.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#080808"/>
+      <stop offset=".55" stop-color="#ece5d9"/>
+      <stop offset="1" stop-color="#151515"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="32" stdDeviation="32" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <rect x="92" y="92" width="716" height="1016" fill="none" stroke="#d8b66a" stroke-opacity=".3"/>
+  <g filter="url(#shadow)" transform="translate(92 372)">
+    <path d="M82 355c105-14 173-59 231-133 38-48 86-78 161-70l101 11c80 9 133 62 152 141l8 34c12 50-23 99-75 101H129c-38 0-66-38-47-84z" fill="#111"/>
+    <path d="M256 220c42-55 91-88 169-78l116 15c45 6 82 30 108 68-105 20-247 22-393-5z" fill="#202020"/>
+    <path d="M167 377h492c42 0 72-31 72-69 18 23 25 54 15 83-13 39-50 66-92 66H126c-41 0-69-38-53-76 25 4 56 2 94-4z" fill="#f1eee7"/>
+    <path d="M574 336l86-102 34 26-83 102zM503 338l80-116 34 21-78 120zM431 341l73-130 36 18-72 132z" fill="#f36f21"/>
+    <path d="M267 258c72 14 143 18 214 12" stroke="#e8e8e8" stroke-width="18" stroke-linecap="round" stroke-dasharray="34 28"/>
+    <path d="M318 185c47 39 91 68 139 87" stroke="#f7f7f7" stroke-width="12" stroke-linecap="round" opacity=".85"/>
+  </g>
+  <text x="450" y="1035" text-anchor="middle" fill="#d8b66a" font-family="Georgia, serif" font-size="42" font-style="italic">Luxury Sneaker</text>
+</svg>

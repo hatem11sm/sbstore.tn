@@ -21,48 +21,51 @@ const RelatedProducts = ({ id }) => {
 
   if (!product?.relatedProducts) {
     return (
-      <>
-        <h2 className="w-11/12 text-center md:text-start text-2xl font-bold text-gray-900 mt-10 mb-5 px-4 sm:px-0 mx-auto">
-          {" "}
-          Related Products
+      <section className="mx-auto max-w-screen-2xl px-4 py-14 sm:px-6 lg:px-10">
+        <h2 className="mb-8 text-xs font-medium uppercase tracking-[0.24em] text-black">
+          Produits similaires
         </h2>
-        <div className="bg-white mx-auto  w-full lg:w-10/12">
+        <div className="bg-white">
           <CardSkeleton />
         </div>
-      </>
+      </section>
     );
   }
   return (
-    <>
-      <h2 className="w-11/12 text-center md:text-start  text-2xl font-bold text-gray-900 mt-10 mb-5 px-4 sm:px-0 mx-auto">
-        {" "}
-        Related Products
+    <section className="mx-auto max-w-screen-2xl border-t border-black/10 px-4 py-14 sm:px-6 lg:px-10">
+      <h2 className="mb-8 text-xs font-medium uppercase tracking-[0.24em] text-black">
+        Produits similaires
       </h2>
 
-      <div className=" w-11/12 mx-auto grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
         {product?.relatedProducts?.map((product) => (
           <Link
             href={`/products/${product?._id}`}
             key={product?._id}
             className="group"
           >
-            <div className="aspect-h-1 aspect-w-1 w-full  md:h-2/3 overflow-hidden rounded-lg  xl:aspect-h-8 xl:aspect-w-7">
+            <div className="aspect-[3/4] w-full overflow-hidden bg-neutral-100">
               <Image
-                width={500}
-                height={400}
+                width={700}
+                height={900}
                 src={withCloudinaryProxy(product?.mainImage)}
                 alt={product?.name}
-                className="h-full w-full object-contain object-center group-hover:opacity-75"
+                className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
               />
             </div>
-            <h3 className="mt-4 text-sm text-gray-700">{product?.name}</h3>
-            <p className="mt-1 text-lg font-medium text-gray-900">
-              {product?.price} Dt
+            <h3 className="mt-3 text-xs font-medium uppercase tracking-[0.08em] text-black">
+              {product?.name}
+            </h3>
+            <p className="mt-1 text-sm text-black">
+              {product?.hidePrice ? "Prix sur demande" : `${product?.price} Dt`}
+            </p>
+            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-black/40">
+              {product?.vendorName || product?.vendorId?.name || "SB Store"}
             </p>
           </Link>
         ))}
       </div>
-    </>
+    </section>
   );
 };
 

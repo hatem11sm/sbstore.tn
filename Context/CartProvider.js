@@ -52,6 +52,9 @@ const CartProvider = ({ children }) => {
             name: e.name,
             quantity: cartdetails.quantity,
             size: cartdetails.size,
+            vendorId: e.vendorId?._id || e.vendorId || null,
+            vendorName: e.vendorName || e.vendorId?.name || "S&B Store",
+            vendorSlug: e.vendorSlug || e.vendorId?.slug || "sb-store",
           },
         ],
       });

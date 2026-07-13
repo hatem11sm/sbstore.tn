@@ -1,11 +1,15 @@
 import connectDB from "@/db/Database";
 import ClothingProduct from "@/models/Product";
+import "@/models/Vendor";
 import { NextResponse } from "next/server";
 
 export const GET = async (req, { params }) => {
   await connectDB();
   try {
-    const product = await ClothingProduct.findById(params.product);
+    const product = await ClothingProduct.findById(params.product).populate(
+      "vendorId",
+      "name slug city status"
+    );
     return NextResponse.json({
       status: 200,
       message: "success",

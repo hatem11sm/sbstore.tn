@@ -18,6 +18,26 @@ const userSchema = mongoose.Schema({
     required: true,
     default: false,
   },
+  role: {
+    type: String,
+    enum: ["customer", "vendor", "admin"],
+    default: "customer",
+  },
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Vendor",
+    default: null,
+  },
 });
+
+userSchema.pre("save", function syncRole(next) {
+  if (this.isAdmin) {
+    this.role = "admin";
+  } else if (this.role === "admin") {
+    this.isAdmin = true;
+  }
+  next();
+});
+
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

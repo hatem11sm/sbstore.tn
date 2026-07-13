@@ -19,7 +19,7 @@ const Button = () => {
         isLoading ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
-      {isLoading ? "Processing..." : "Proceed to checkout"}
+      {isLoading ? "Préparation..." : "Valider la commande"}
     </button>
   );
 };

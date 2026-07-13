@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 import { Context } from "./Context";
 import { useContext } from "react";
 
@@ -12,8 +12,14 @@ const AdminProvider = ({ children }) => {
   const [totalUser, setTotalUser] = useState([]);
   const [totalProduct, setTotalProduct] = useState([]);
   const [totalOrders, setTotalOrders] = useState([]);
+  const [totalVendors, setTotalVendors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const currentUser = user?.data || null;
+  const isAdminView = Boolean(currentUser?.isAdmin || currentUser?.role === "admin");
+  const isVendorView = currentUser?.role === "vendor";
+  const scopedVendor = currentUser?.vendorId || null;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,7 +27,7 @@ const AdminProvider = ({ children }) => {
         return;
       }
 
-      if (!user?.data?.isAdmin) {
+      if (!isAdminView && !isVendorView) {
         setIsLoading(false);
         return;
       }
@@ -30,15 +36,33 @@ const AdminProvider = ({ children }) => {
         setIsLoading(true);
         setError(null);
 
-        const [usersResponse, productsResponse, ordersResponse] = await Promise.all([
-          axios.get("/api/alluser").catch(err => ({ data: { data: [] } })),
-          axios.get("/api/allproducts").catch(err => ({ data: { data: [] } })),
-          axios.get("/api/orders").catch(err => ({ data: { data: [] } }))
-        ]);
+        const requests = [
+          axios.get("/api/allproducts").catch(() => ({ data: { data: [] } })),
+          axios.get("/api/orders").catch(() => ({ data: { data: [] } })),
+          axios.get("/api/vendors").catch(() => ({ data: { data: [] } })),
+        ];
+
+        if (isAdminView) {
+          requests.unshift(
+            axios.get("/api/alluser").catch(() => ({ data: { data: [] } }))
+          );
+        }
+
+        const responses = await Promise.all(requests);
+
+        const [
+          usersResponse,
+          productsResponse,
+          ordersResponse,
+          vendorsResponse,
+        ] = isAdminView
+          ? responses
+          : [{ data: { data: [] } }, ...responses];
 
         setTotalUser(usersResponse.data.data || []);
         setTotalProduct(productsResponse.data.data || []);
         setTotalOrders(ordersResponse.data.data || []);
+        setTotalVendors(vendorsResponse.data.data || []);
       } catch (error) {
         console.error("Error fetching admin data:", error);
         setError("Failed to load admin data");
@@ -48,7 +72,12 @@ const AdminProvider = ({ children }) => {
     };
 
     fetchData();
-  }, [user]);
+  }, [user, isAdminView, isVendorView]);
+
+  const vendorAccounts = useMemo(() => {
+    if (!Array.isArray(totalUser)) return [];
+    return totalUser.filter((item) => item.role === "vendor");
+  }, [totalUser]);
 
   return (
     <AdminContext.Provider 
@@ -56,11 +85,18 @@ const AdminProvider = ({ children }) => {
         totalUser, 
         totalProduct, 
         totalOrders,
+        totalVendors,
         setTotalUser,
         setTotalProduct,
         setTotalOrders,
+        setTotalVendors,
         isLoading,
-        error
+        error,
+        currentUser,
+        isAdminView,
+        isVendorView,
+        scopedVendor,
+        vendorAccounts,
       }}
     >
       {children}

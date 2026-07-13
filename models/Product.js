@@ -16,6 +16,10 @@ const clothingProduct = new mongoose.Schema({
     required: true,
     min: 0,
   },
+  hidePrice: {
+    type: Boolean,
+    default: false,
+  },
   category: {
     type: String,
     required: true,
@@ -38,6 +42,22 @@ const clothingProduct = new mongoose.Schema({
     default: "woman",
     lowercase: true,
     trim: true,
+  },
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Vendor",
+    index: true,
+  },
+  vendorName: {
+    type: String,
+    trim: true,
+    default: "SB Store",
+  },
+  vendorSlug: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: "sb-store",
   },
   subcategory: {
     type: String,
@@ -62,12 +82,6 @@ clothingProduct.pre("validate", function ensureCategorySlug(next) {
   if (!this.categoryCollectionGroup) {
     this.categoryCollectionGroup = "woman";
   }
-  next();
-});
-
-// Add pre-save middleware to log the document before saving
-clothingProduct.pre('save', function(next) {
-  console.log("Pre-save document:", this.toObject());
   next();
 });
 

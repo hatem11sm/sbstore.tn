@@ -48,7 +48,7 @@ const Products = () => {
           <div className="font-bold">Image</div>
           <div className="font-bold">Product Name</div>
           <div className="font-bold">Price</div>
-          <div className="font-bold">Category</div>
+          <div className="font-bold">Boutique</div>
         </div>
 
         {currentItems.length > 0 ? (
@@ -70,7 +70,14 @@ const Products = () => {
               </div>
               <div className="text-gray-600 mx-2">{item.name}</div>
               <div className="text-gray-600 mx-2">{item.price} dt</div>
-              <div className="text-sm text-gray-500 mx-2">{item.category}</div>
+              <div className="text-sm text-gray-500 mx-2">
+                <span className="font-semibold text-gray-700">
+                  {item.vendorName || item.vendorId?.name || "SB Store"}
+                </span>
+                <span className="mt-1 block text-xs text-gray-400">
+                  {item.category}
+                </span>
+              </div>
             </Link>
           ))
         ) : (

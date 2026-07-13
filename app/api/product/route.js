@@ -1,13 +1,36 @@
 import connectDB from "@/db/Database";
 import Category from "@/models/Category";
 import ClothingProduct from "@/models/Product";
+import Vendor from "@/models/Vendor";
 import slugify from "@/utils/slugify";
 import { normalizeCollectionGroup, buildCategoryKey } from "@/utils/categoryPaths";
 import { NextResponse } from "next/server";
+import {
+  isAdminUser,
+  isVendorUser,
+  requireAuthUser,
+  userOwnsVendor,
+} from "@/utils/serverAuth";
 
 export const POST = async (req) => {
   try {
     await connectDB();
+    const { user, error: authError } = await requireAuthUser();
+
+    if (authError) {
+      return NextResponse.json(
+        { status: authError.status, message: authError.message },
+        { status: authError.status }
+      );
+    }
+
+    if (!isAdminUser(user) && !isVendorUser(user)) {
+      return NextResponse.json(
+        { status: 403, message: "Accès non autorisé" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     console.log("Raw request body:", body);
     
@@ -19,7 +42,9 @@ export const POST = async (req) => {
       categorySlug,
       categoryCollectionGroup,
       subcategory = "",
+      vendorId = "",
       mainImage,
+      hidePrice = false,
     } = body;
     
     // Log the received values with their types
@@ -30,6 +55,7 @@ export const POST = async (req) => {
       category: { value: category, type: typeof category },
       categorySlug: { value: categorySlug, type: typeof categorySlug },
       subcategory: { value: subcategory, type: typeof subcategory },
+      vendorId: { value: vendorId, type: typeof vendorId },
       categoryCollectionGroup: { value: categoryCollectionGroup, type: typeof categoryCollectionGroup },
       mainImage: { value: mainImage, type: typeof mainImage }
     });
@@ -89,6 +115,41 @@ export const POST = async (req) => {
     }
 
     const normalizedSubcategory = subcategory?.trim() || "";
+    let matchedVendor = null;
+
+    if (vendorId) {
+      matchedVendor = await Vendor.findById(vendorId);
+      if (!matchedVendor) {
+        return NextResponse.json(
+          {
+            status: 400,
+            message: "La boutique sélectionnée n’existe pas",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (isVendorUser(user)) {
+      if (!user?.vendorId?._id) {
+        return NextResponse.json(
+          { status: 403, message: "Aucune boutique liée à ce compte vendeur" },
+          { status: 403 }
+        );
+      }
+
+      if (vendorId && !userOwnsVendor(user, vendorId)) {
+        return NextResponse.json(
+          {
+            status: 403,
+            message: "Un vendeur ne peut créer que des produits pour sa boutique",
+          },
+          { status: 403 }
+        );
+      }
+
+      matchedVendor = await Vendor.findById(user.vendorId._id);
+    }
 
     if (
       normalizedSubcategory &&
@@ -108,11 +169,15 @@ export const POST = async (req) => {
     const productData = {
       name: String(name).trim(),
       price: Number(price),
+      hidePrice: Boolean(hidePrice),
       description: String(description).trim(),
       category: matchedCategory.name,
       categorySlug: matchedCategory.slug,
       categoryId: matchedCategory._id,
       categoryCollectionGroup: matchedCategory.collectionGroup,
+      vendorId: matchedVendor?._id,
+      vendorName: matchedVendor?.name || "SB Store",
+      vendorSlug: matchedVendor?.slug || "sb-store",
       subcategory: normalizedSubcategory,
       mainImage: String(mainImage).trim()
     };
@@ -153,7 +218,10 @@ export const POST = async (req) => {
 export const GET = async (req) => {
   try {
     await connectDB();
-    const products = await ClothingProduct.find({});
+    const products = await ClothingProduct.find({}).populate(
+      "vendorId",
+      "name slug city status"
+    );
     if (!products) {
       return NextResponse.json({ 
         status: 400, 
